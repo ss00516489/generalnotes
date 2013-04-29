@@ -1,16 +1,14 @@
-# Sample Node/Express site using Persona
+# For Rawra
 
 ## Installation instructions
 
 Clone the repository
 
-> git clone git://github.com/ednapiranha/bid-scaffold-example.git
-
-> curl http://npmjs.org/install.sh | sh
+> git clone git://github.com/ednapiranha/for-rawra.git
 
 Install node by using brew or through the website http://nodejs.org/#download
 
-> cd bid-scaffold-example
+> cd for-rawra
 
 > cp local.json-dist local.json
 
@@ -19,7 +17,3 @@ Install node by using brew or through the website http://nodejs.org/#download
 Run the site
 
 > node app.js
-
-## Tests
-
-> make test
