@@ -52,7 +52,7 @@ body {
     color: #111;
     font-family: Arial, sans-serif;
     font-size: 25px;
-    padding: 20px;
+    margin: 20px;
     position: relative;
 }
 
@@ -66,13 +66,6 @@ h2 {
     font-size: 45px;
     margin: 20px 0;
     text-align: center;
-}
-
-#wrapper {
-    background-color: rgba(255, 255, 255, 0.6);
-    border-radius: 3px;
-    margin: 20px 0;
-    padding: 20px;
 }
 
 #add {
@@ -116,10 +109,20 @@ textarea {
     top: 260px;
 }
 
+ul {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 3px;
+    clear: both;
+    display: block;
+    float: left;
+    margin: 20px 0;
+    width: 100%;
+}
+
 ul li {
     line-height: 35px;
     margin-bottom: 10px;
-    overflow: hidden;
+    padding: 0 20px;
 }
 
 ul li a {
@@ -139,4 +142,19 @@ ul li a {
 
 .hidden {
     display: none;
+}
+
+@media only screen and (max-width: 360px) {
+    form {
+        right: 260px;
+    }
+
+    textarea {
+        width: 200px;
+    }
+
+    .cancel {
+        right: -190px;
+        top: 245px;
+    }
 }

@@ -6,10 +6,9 @@ block content
     button(type='submit') Add
     a(class='cancel', href='javascript:;') x
   a(id='add', href='javascript:;') +
-  #wrapper
-    ul
-      for n in notes
-        li
-          p
-            span!= n.text
-            a(href='/note/#{n.id}', class='delete') X
+  ul
+    for n in notes
+      li
+        p
+          span!= n.text
+          a(href='/note/#{n.id}', class='delete') X
