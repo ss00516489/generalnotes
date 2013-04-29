@@ -6,7 +6,10 @@ html
     meta(content='yes', name='apple-mobile-web-app-capable')
     meta(content='chrome=1', http-equiv='X-UA-Compatible')
     link(rel='shortcut icon', href='/images/favicon.png')
-    link(rel='stylesheet', href='/stylesheets/main.css')
+    if debug
+      link(rel='stylesheet', href='/stylesheets/main.css')
+    else
+      link(rel='stylesheet', href='/stylesheets/main-min.css')
 
   body
     #header
@@ -19,4 +22,7 @@ html
     #footer
 
     script(src='https://login.persona.org/include.js', type='text/javascript')
-    script(src='/javascripts/require.js', data-main='/javascripts/config')
+    if debug
+      script(src='/javascripts/require.js', data-main='/javascripts/config')
+    else
+      script(src='/javascripts/build/notes.js')
