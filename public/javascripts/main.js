@@ -5,57 +5,85 @@ define(['jquery'],
 
   var body = $('body');
   var form = body.find('form');
+  var currentUser = localStorage.getItem('personaUser');
 
   body.on('click', '#login', function (ev) {
     ev.preventDefault();
+    navigator.id.request();
+  });
 
-    navigator.id.get(function (assertion) {
-      if (!assertion) {
-        return;
-      }
+  body.on('click', '#logout', function (ev) {
+    ev.preventDefault();
+    navigator.id.logout();
+  });
 
+  navigator.id.watch({
+    loggedInUser: currentUser,
+    onlogin: function (assertion) {
       $.ajax({
         url: '/persona/verify',
         type: 'POST',
         data: { assertion: assertion },
         dataType: 'json',
         cache: false
-      }).done(function(data) {
-        if (data.status === 'okay') {
-          document.location.href = '/dashboard';
-        } else {
-          console.log('Login failed because ' + data.reason);
-        }
+      }).done(function (res, status, xhr) {
+        localStorage.setItem('personaUser', res.email);
+        document.location.href = '/dashboard';
+
+      }).fail(function (res, status, xhr) {
+        console.log('Login failed because ' + data.reason);
       });
-    });
-  });
-
-  body.on('click', '#logout', function (ev) {
-    ev.preventDefault();
-
-    $.ajax({
-      url: '/persona/logout',
-      type: 'POST',
-      dataType: 'json',
-      cache: false
-    }).done(function(data) {
-      if (data.status === 'okay') {
+    },
+    onlogout: function() {
+      $.ajax({
+        url: '/persona/logout',
+        type: 'POST',
+        dataType: 'json',
+        cache: false
+      }).done(function (res, status, xhr) {
+        localStorage.removeItem('personaUser');
         document.location.href = '/';
-      } else {
+
+      }).fail(function (res, status, xhr) {
         console.log('Logout failed because ' + data.reason);
-      }
-    });
+      });
+    }
   });
+
+  var postForm = function () {
+    $.post('/dashboard', form.serialize(), function (data) {
+      var li = $('<li><p><span>' + data.message + '</span><a href="javascript:;" ' +
+        'data-url="/note/' + data.id + '" class="delete">x</a></p></li>');
+      body.find('ul').prepend(li);
+      body.find('.cancel').click();
+
+    }).fail(function () {
+      console.log('error posting');
+    });
+  };
 
   body.on('click', '#add', function (ev) {
     if (form.hasClass('hidden')) {
       form.removeClass('hidden');
     } else {
-      form.submit();
+      postForm();
     }
   });
 
+  body.on('keydown', function (ev) {
+    if (ev.keyCode === 13 && (ev.ctrlKey || ev.metaKey)) {
+      postForm();
+    }
+  });
+
+  body.on('click', '.delete', function (ev) {
+    var self = $(this);
+    $.post(self.attr('data-url'));
+    self.closest('li').remove();
+  });
+
   body.on('click', '.cancel', function (ev) {
+    body.find('textarea').val('');
     form.addClass('hidden');
   });
 });

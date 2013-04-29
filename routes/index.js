@@ -10,7 +10,7 @@ module.exports = function (app, client, isLoggedIn) {
   });
 
   app.get('/dashboard', isLoggedIn, function (req, res) {
-    client.keys('notes:' + req.session.email + ':*', function (err, notes) {
+    client.lrange('notes:' + req.session.email, 0, -1, function (err, notes) {
       if (err) {
         res.render('dashboard', { notes: [] });
 
@@ -19,6 +19,7 @@ module.exports = function (app, client, isLoggedIn) {
           res.render('dashboard', { notes: [] });
         } else {
           var notesArr = [];
+
           notes.forEach(function (n) {
             client.get(n, function (err, noteItem) {
               if (err) {
@@ -61,21 +62,24 @@ module.exports = function (app, client, isLoggedIn) {
           throw new Error('Error creating note id');
 
         } else {
-          client.set('notes:' + req.session.email + ':' + id, newText.join(' '));
-          res.redirect('/dashboard');
+          var finalText = newText.join(' ');
+          var keyName = 'notes:' + req.session.email + ':' + id;
+
+          client.lpush('notes:' + req.session.email, keyName);
+          client.set(keyName, finalText);
+          res.json({ message: finalText });
         }
       });
     } else {
-      res.redirect('/dashboard');
+      res.json({ message: false });
     }
   });
 
-  app.get('/note/:id', isLoggedIn, function (req, res) {
-    client.del('notes:' + req.session.email + ':' + parseInt(req.params.id, 10), function (err, resp) {
-      if (err) {
-        throw new Error("Could not delete from a note you don't own");
-      }
-      res.redirect('/dashboard');
-    });
+  app.post('/note/:id', isLoggedIn, function (req, res) {
+    var keyName = 'notes:' + req.session.email + ':' + parseInt(req.params.id, 10);
+
+    client.del(keyName);
+    client.lrem('notes:' + req.session.email, 0, keyName);
+    res.json({ message: true });
   });
 };

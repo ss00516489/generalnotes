@@ -11,4 +11,4 @@ block content
       li
         p
           span!= n.text
-          a(href='/note/#{n.id}', class='delete') X
+          a(href='javascript:;', class='delete', data-url='/note/#{n.id}') x
