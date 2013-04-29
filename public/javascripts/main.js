@@ -4,11 +4,12 @@ define(['jquery'],
   'use strict';
 
   var body = $('body');
+  var form = body.find('form');
 
-  body.on('click', '#login', function(ev) {
+  body.on('click', '#login', function (ev) {
     ev.preventDefault();
 
-    navigator.id.get(function(assertion) {
+    navigator.id.get(function (assertion) {
       if (!assertion) {
         return;
       }
@@ -29,7 +30,7 @@ define(['jquery'],
     });
   });
 
-  body.on('click', '#logout', function(ev) {
+  body.on('click', '#logout', function (ev) {
     ev.preventDefault();
 
     $.ajax({
@@ -44,5 +45,17 @@ define(['jquery'],
         console.log('Logout failed because ' + data.reason);
       }
     });
+  });
+
+  body.on('click', '#add', function (ev) {
+    if (form.hasClass('hidden')) {
+      form.removeClass('hidden');
+    } else {
+      form.submit();
+    }
+  });
+
+  body.on('click', '.cancel', function (ev) {
+    form.addClass('hidden');
   });
 });

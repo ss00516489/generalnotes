@@ -1,4 +1,15 @@
 extend layout
 
 block content
-  p This is the dashboard
+  form(method='post', class='hidden')
+    textarea(rows='10', cols='10', name='text')
+    button(type='submit') Add
+    a(class='cancel', href='javascript:;') x
+  a(id='add', href='javascript:;') +
+  #wrapper
+    ul
+      for n in notes
+        li
+          p
+            span!= n.text
+            a(href='/note/#{n.id}', class='delete') X

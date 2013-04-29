@@ -4,6 +4,8 @@ var app = express();
 var server = require('http').createServer(app);
 var nconf = require('nconf');
 var settings = require('./settings')(app, configurations, express);
+var redis = require('redis');
+var client = redis.createClient();
 
 nconf.argv().env().file({ file: 'local.json' });
 
@@ -22,6 +24,6 @@ require('express-persona')(app, {
 });
 
 // routes
-require("./routes")(app, isLoggedIn);
+require("./routes")(app, client, isLoggedIn);
 
 app.listen(process.env.PORT || nconf.get('port'));
