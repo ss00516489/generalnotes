@@ -2,7 +2,11 @@
 
 module.exports = function (app, client, isLoggedIn) {
   app.get('/', function(req, res) {
-    res.render('index');
+    if (req.session.email) {
+      res.redirect('/dashboard');
+    } else {
+      res.render('index');
+    }
   });
 
   app.get('/dashboard', isLoggedIn, function (req, res) {
