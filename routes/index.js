@@ -79,4 +79,9 @@ module.exports = function (app, client, isLoggedIn) {
     client.lrem('notes:' + req.session.email, 0, keyName);
     res.json({ message: true });
   });
+
+  app.get('/logout', function (req, res) {
+    req.session.reset();
+    res.redirect('/');
+  });
 };

@@ -41,7 +41,6 @@ define(['jquery'],
   });
 
   var saveLocalNote = function (li, content) {
-    console.log('error posting, saving locally');
     if (content.length > 0) {
       var textArr = content.split(/\s|\n|\r/gi);
       var newText = [];
@@ -61,7 +60,6 @@ define(['jquery'],
 
       li = $('<li><p><span>' + content + '</span><a href="javascript:;" ' +
         'data-url="#" data-action="delete" class="delete">x</a></p></li>');
-      console.log('posted note locally');
       body.find('ul').prepend(li);
       body.find('.cancel').click();
     }
@@ -96,11 +94,9 @@ define(['jquery'],
 
   while (idx > -1) {
     noteKey = localStorage.key(idx);
-    console.log('*** ', noteKey);
     if (noteKey && noteKey.indexOf('note:') > -1) {
       form.find('textarea').val(localStorage.getItem(noteKey));
       postForm();
-      console.log('deleted clientside note ', noteKey);
       localStorage.removeItem(noteKey);
     }
 
