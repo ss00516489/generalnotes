@@ -71,6 +71,7 @@ module.exports = function (app, client, isLoggedIn) {
         }
       });
     } else {
+      res.status(400);
       res.json({ message: false });
     }
   });
