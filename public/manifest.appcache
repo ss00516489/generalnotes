@@ -1,10 +1,8 @@
 CACHE MANIFEST
-# v2013-04-30
+# v2013-04-30-1
 
 CACHE:
-/images/icon-16.png
-/images/icon-72.png
-/javascripts/build/notes.js
+/images/*
 /stylesheets/main-min.css
 
 # catch-all for anything else
