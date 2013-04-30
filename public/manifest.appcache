@@ -1,0 +1,14 @@
+CACHE MANIFEST
+# v2013-04-30
+
+CACHE:
+/images/icon-16.png
+/images/icon-72.png
+/javascripts/build/notes.js
+/stylesheets/main-min.css
+
+# catch-all for anything else
+NETWORK:
+*
+http://*
+https://*

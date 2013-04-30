@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "name": "general notes",
+  "description": "General Note App",
+  "launch_path": "/",
+  "icons": {
+    "16": "/images/icon-16.png",
+    "72": "/images/icon-72.png",
+    "114": "/images/icon-114.png",
+    "128": "/images/icon-128.png",
+    "256": "/images/icon-256.png"
+  },
+  "developer": {
+    "name": "Edna Piranha",
+    "url": "http://generalgoods.net"
+  },
+  "installs_allowed_from": ["https://marketplace.firefox.com"],
+  "appcache_path": "/manifest.appcache",
+  "locales": {
+  },
+  "default_locale": "en"
+}

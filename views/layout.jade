@@ -1,37 +1,7 @@
 !!! 5
-html
-  head
-    title General Notes.
-    meta(content='width=device-width, height=device-height, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0', name='viewport')
-    meta(content='yes', name='apple-mobile-web-app-capable')
-    meta(content='chrome=1', http-equiv='X-UA-Compatible')
-    link(rel='shortcut icon', href='/images/favicon.png')
-    if debug
-      link(rel='stylesheet', href='/stylesheets/main.css')
-    else
-      link(rel='stylesheet', href='/stylesheets/main-min.css')
-
-  body(class='authenticated-#{!!session.email}')
-    #header
-      if session.email
-        a(href='javascript:;', data-action='logout', id='logout') Exit
-      else
-        a(href='javascript:;', data-action='login', id='login') Log in to save remotely.
-
-    form(method='post', class='hidden')
-      textarea(rows='10', cols='10', name='text')
-      button(type='submit') Add
-      a(class='cancel', data-action='cancel', href='javascript:;') x
-    a(id='add', data-action='add', href='javascript:;') +
-    ul
-      for n in notes
-        li
-          span!= n.text
-          a(href='javascript:;', class='delete', data-action='delete', data-url='/note/#{n.id}') x
-    #footer
-
-    script(src='https://login.persona.org/include.js', type='text/javascript')
-    if debug
-      script(src='/javascripts/require.js', data-main='/javascripts/config')
-    else
-      script(src='/javascripts/build/notes.js')
+if debug
+  html
+    block content
+else
+  html(manifest='/manifest.appcache')
+    block content

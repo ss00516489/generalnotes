@@ -119,6 +119,10 @@ textarea {
     width: 300px;
 }
 
+textarea:focus {
+    border: 0;
+}
+
 .cancel {
     background-color: #111;
     border-radius: 5px;
