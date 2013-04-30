@@ -1,48 +1,44 @@
 'use strict';
 
 module.exports = function (app, client, isLoggedIn) {
-  app.get('/', function(req, res) {
+  app.get('/', function (req, res) {
     if (req.session.email) {
-      res.redirect('/dashboard');
+      client.lrange('notes:' + req.session.email, 0, -1, function (err, notes) {
+        if (err) {
+          res.render('dashboard', { notes: [] });
+
+        } else {
+          if (notes.length < 1) {
+            res.render('index', { notes: [] });
+          } else {
+            var notesArr = [];
+
+            notes.forEach(function (n) {
+              client.get(n, function (err, noteItem) {
+                if (err) {
+                  throw new Error('Error getting note');
+                } else {
+                  var nDetail = {
+                    id: n.split(':')[2],
+                    text: noteItem
+                  };
+                  notesArr.push(nDetail);
+                }
+
+                if (notesArr.length === notes.length) {
+                  res.render('index', { notes: notesArr });
+                }
+              });
+            });
+          }
+        }
+      });
     } else {
-      res.render('index');
+      res.render('index', { notes: [] });
     }
   });
 
-  app.get('/dashboard', isLoggedIn, function (req, res) {
-    client.lrange('notes:' + req.session.email, 0, -1, function (err, notes) {
-      if (err) {
-        res.render('dashboard', { notes: [] });
-
-      } else {
-        if (notes.length < 1) {
-          res.render('dashboard', { notes: [] });
-        } else {
-          var notesArr = [];
-
-          notes.forEach(function (n) {
-            client.get(n, function (err, noteItem) {
-              if (err) {
-                throw new Error('Error getting note');
-              } else {
-                var nDetail = {
-                  id: n.split(':')[2],
-                  text: noteItem
-                };
-                notesArr.push(nDetail);
-              }
-
-              if (notesArr.length === notes.length) {
-                res.render('dashboard', { notes: notesArr });
-              }
-            });
-          });
-        }
-      }
-    });
-  });
-
-  app.post('/dashboard', isLoggedIn, function (req, res) {
+  app.post('/', isLoggedIn, function (req, res) {
     if (req.body.text.trim().length > 0) {
       var textArr = req.body.text.trim().split(/\s|\n|\r/gi);
       var newText = [];

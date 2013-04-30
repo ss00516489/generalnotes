@@ -7,16 +7,6 @@ define(['jquery'],
   var form = body.find('form');
   var currentUser = localStorage.getItem('personaUser');
 
-  body.on('click', '#login', function (ev) {
-    ev.preventDefault();
-    navigator.id.request();
-  });
-
-  body.on('click', '#logout', function (ev) {
-    ev.preventDefault();
-    navigator.id.logout();
-  });
-
   navigator.id.watch({
     loggedInUser: currentUser,
     onlogin: function (assertion) {
@@ -28,7 +18,7 @@ define(['jquery'],
         cache: false
       }).done(function (res, status, xhr) {
         localStorage.setItem('personaUser', res.email);
-        document.location.href = '/dashboard';
+        document.location.href = '/';
 
       }).fail(function (res, status, xhr) {
         console.log('Login failed because ' + data.reason);
@@ -50,24 +40,105 @@ define(['jquery'],
     }
   });
 
-  var postForm = function () {
-    $.post('/dashboard', form.serialize(), function (data) {
-      var li = $('<li><p><span>' + data.message + '</span><a href="javascript:;" ' +
-        'data-url="/note/' + data.id + '" class="delete">x</a></p></li>');
+  var saveLocalNote = function (li, content) {
+    console.log('error posting, saving locally');
+    if (content.length > 0) {
+      var textArr = content.split(/\s|\n|\r/gi);
+      var newText = [];
+
+      for (var i = 0; i < textArr.length; i ++) {
+        textArr[i] = textArr[i].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        if (textArr[i].match(/^http/i)) {
+          newText.push('<a href="' + textArr[i] +'" target="_blank">' + textArr[i] + '</a>');
+        } else {
+          newText.push(textArr[i]);
+        }
+      }
+
+      localStorage.setItem('note:' + (new Date().getTime()), content);
+      content = newText.join(' ');
+
+      li = $('<li><p><span>' + content + '</span><a href="javascript:;" ' +
+        'data-url="#" data-action="delete" class="delete">x</a></p></li>');
+      console.log('posted note locally');
       body.find('ul').prepend(li);
       body.find('.cancel').click();
+    }
+  };
+
+  var postForm = function () {
+    var li;
+    var content = form.find('textarea').val().trim();
+
+    $.post('/', form.serialize(), function (data) {
+      if (body.hasClass('authenticated-true')) {
+        li = $('<li><p><span>' + data.message + '</span><a href="javascript:;" ' +
+          'data-url="/note/' + data.id + '" data-action="delete" class="delete">x</a></p></li>');
+      } else {
+        saveLocalNote(li, content);
+      }
 
     }).fail(function () {
-      console.log('error posting');
+      saveLocalNote(li, content);
+
+    }).always(function () {
+      if (content.length > 0 && li) {
+        body.find('ul').prepend(li);
+      }
+      body.find('.cancel').click();
     });
   };
 
-  body.on('click', '#add', function (ev) {
-    if (form.hasClass('hidden')) {
-      form.removeClass('hidden');
-      form.find('textarea').focus();
-    } else {
+  // upload clientside notes
+  var noteKey;
+  var idx = localStorage.length;
+
+  while (idx > -1) {
+    noteKey = localStorage.key(idx);
+    console.log('*** ', noteKey);
+    if (noteKey && noteKey.indexOf('note:') > -1) {
+      form.find('textarea').val(localStorage.getItem(noteKey));
       postForm();
+      console.log('deleted clientside note ', noteKey);
+      localStorage.removeItem(noteKey);
+    }
+
+    idx --;
+  }
+
+  body.on('click', function (ev) {
+    var self = $(ev.target);
+
+    switch (self.data('action')) {
+      case 'login':
+        ev.preventDefault();
+        navigator.id.request();
+        break;
+
+      case 'logout':
+        ev.preventDefault();
+        navigator.id.logout();
+        break;
+
+      case 'add':
+        if (form.hasClass('hidden')) {
+          form.removeClass('hidden');
+          form.find('textarea').focus();
+        } else {
+          postForm();
+        }
+        break;
+
+      case 'delete':
+        $.post(self.attr('data-url'));
+        self.closest('li').remove();
+        break;
+
+      case 'cancel':
+        body.find('textarea').val('');
+        form.addClass('hidden');
+        break;
     }
   });
 
@@ -75,16 +146,5 @@ define(['jquery'],
     if (ev.keyCode === 13 && (ev.ctrlKey || ev.metaKey)) {
       postForm();
     }
-  });
-
-  body.on('click', '.delete', function (ev) {
-    var self = $(this);
-    $.post(self.attr('data-url'));
-    self.closest('li').remove();
-  });
-
-  body.on('click', '.cancel', function (ev) {
-    body.find('textarea').val('');
-    form.addClass('hidden');
   });
 });

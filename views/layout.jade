@@ -11,14 +11,23 @@ html
     else
       link(rel='stylesheet', href='/stylesheets/main-min.css')
 
-  body
+  body(class='authenticated-#{!!session.email}')
     #header
       if session.email
-        a(href='#', id='logout') Log out
+        a(href='javascript:;', data-action='logout', id='logout') Exit
       else
-        a(href='#', id='login') Log in
+        a(href='javascript:;', data-action='login', id='login') Log in to save remotely.
 
-    block content
+    form(method='post', class='hidden')
+      textarea(rows='10', cols='10', name='text')
+      button(type='submit') Add
+      a(class='cancel', data-action='cancel', href='javascript:;') x
+    a(id='add', data-action='add', href='javascript:;') +
+    ul
+      for n in notes
+        li
+          span!= n.text
+          a(href='javascript:;', class='delete', data-action='delete', data-url='/note/#{n.id}') x
     #footer
 
     script(src='https://login.persona.org/include.js', type='text/javascript')
