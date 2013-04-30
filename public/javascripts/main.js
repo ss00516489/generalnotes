@@ -1,43 +1,46 @@
-define(['jquery'],
-  function($) {
+define(['jquery', 'asyncStorage'],
+  function($, asyncStorage) {
 
   'use strict';
 
   var body = $('body');
   var form = body.find('form');
-  var currentUser = localStorage.getItem('personaUser');
+  var currentUser;
 
-  navigator.id.watch({
-    loggedInUser: currentUser,
-    onlogin: function (assertion) {
-      $.ajax({
-        url: '/persona/verify',
-        type: 'POST',
-        data: { assertion: assertion },
-        dataType: 'json',
-        cache: false
-      }).done(function (res, status, xhr) {
-        localStorage.setItem('personaUser', res.email);
-        document.location.href = '/';
+  asyncStorage.getItem('personaUser', function (email) {
+    currentUser = email;
+    navigator.id.watch({
+      loggedInUser: currentUser,
+      onlogin: function (assertion) {
+        $.ajax({
+          url: '/persona/verify',
+          type: 'POST',
+          data: { assertion: assertion },
+          dataType: 'json',
+          cache: false
+        }).done(function (res, status, xhr) {
+          asyncStorage.setItem('personaUser', res.email);
+          document.location.href = '/';
 
-      }).fail(function (res, status, xhr) {
-        console.log('Login failed because ' + data.reason);
-      });
-    },
-    onlogout: function() {
-      $.ajax({
-        url: '/persona/logout',
-        type: 'POST',
-        dataType: 'json',
-        cache: false
-      }).done(function (res, status, xhr) {
-        localStorage.removeItem('personaUser');
-        document.location.href = '/';
+        }).fail(function (res, status, xhr) {
+          console.log('Login failed because ' + data.reason);
+        });
+      },
+      onlogout: function() {
+        $.ajax({
+          url: '/persona/logout',
+          type: 'POST',
+          dataType: 'json',
+          cache: false
+        }).done(function (res, status, xhr) {
+          asyncStorage.removeItem('personaUser');
+          document.location.href = '/';
 
-      }).fail(function (res, status, xhr) {
-        console.log('Logout failed because ' + data.reason);
-      });
-    }
+        }).fail(function (res, status, xhr) {
+          console.log('Logout failed because ' + data.reason);
+        });
+      }
+    });
   });
 
   var saveLocalNote = function (li, content) {
@@ -55,7 +58,7 @@ define(['jquery'],
         }
       }
 
-      localStorage.setItem('note:' + (new Date().getTime()), content);
+      asyncStorage.setItem('note:' + (new Date().getTime()), content);
       content = newText.join(' ');
 
       li = $('<li><p><span>' + content + '</span><a href="javascript:;" ' +
@@ -97,7 +100,7 @@ define(['jquery'],
     if (noteKey && noteKey.indexOf('note:') > -1) {
       form.find('textarea').val(localStorage.getItem(noteKey));
       postForm();
-      localStorage.removeItem(noteKey);
+      asyncStorage.removeItem(noteKey);
     }
 
     idx --;

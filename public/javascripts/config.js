@@ -1,11 +1,15 @@
 requirejs.config({
   deps: ['main'],
   paths: {
-    'jquery': 'lib/jquery'
+    'jquery': 'lib/jquery',
+    'asyncStorage': 'lib/asyncStorage'
   },
   shim: {
     'jquery': {
       exports: 'jQuery'
+    },
+    'asyncStorage': {
+      exports: 'asyncStorage'
     }
   }
 });
