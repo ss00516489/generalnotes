@@ -65,6 +65,7 @@ define(['jquery'],
   body.on('click', '#add', function (ev) {
     if (form.hasClass('hidden')) {
       form.removeClass('hidden');
+      form.find('textarea').focus();
     } else {
       postForm();
     }

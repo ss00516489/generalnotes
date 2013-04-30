@@ -9,6 +9,5 @@ block content
   ul
     for n in notes
       li
-        p
-          span!= n.text
-          a(href='javascript:;', class='delete', data-url='/note/#{n.id}') x
+        span!= n.text
+        a(href='javascript:;', class='delete', data-url='/note/#{n.id}') x

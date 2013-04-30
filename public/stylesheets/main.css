@@ -47,23 +47,36 @@ table {
     border-spacing: 0;
 }
 
-body {
-    background-color: #f1f1f1;
-    color: #111;
-    font-family: Arial, sans-serif;
-    font-size: 25px;
-    margin: 20px;
+html, body {
+    height: 100%;
     position: relative;
 }
 
+body {
+    background-color: #f1f1f1;
+    color: #222;
+    font-family: Arial, sans-serif;
+    font-size: 25px;
+}
+
 a {
-    color: #0bb3c2;
+    color: #1ba4e9;
     border-bottom: 2px solid #fff;
     text-decoration: none;
 }
 
+#header {
+    height: 70px;
+    padding: 10px 20px 10px;
+}
+
+#logout {
+    display: inline-block;
+    font-size: 16px;
+}
+
 h2 {
-    font-size: 45px;
+    font-size: 55px;
     margin: 20px 0;
     text-align: center;
 }
@@ -72,22 +85,26 @@ h2 {
     border-bottom: none;
     color: #111;
     font-size: 70px;
-    font-weight: bold;
-    line-height: 50px;
+    font-weight: 600;
+    line-height: 42px;
     position: fixed;
     right: 20px;
     top: 5px;
 }
 
 #add:hover {
-    box-shadow: #fff 4px 4px 0;
-    color: #0bb3c2;
+    box-shadow: #fff 8px 8px 0;
+    color: #1ba4e9;
 }
 
 form {
+    display: block;
+    opacity: 1.0;
     position: fixed;
     right: 360px;
     top: 10px;
+    transition: 0.6s;
+    -webkit-transition: 0.6s;
 }
 
 textarea {
@@ -102,27 +119,36 @@ textarea {
 }
 
 .cancel {
+    background-color: #111;
     display: inline-block;
-    font-size: 30px;
+    font-size: 40px;
+    line-height: 30px;
+    padding: 5px 10px 10px;
     position: absolute;
     right: -285px;
-    top: 260px;
+    top: 262px;
+}
+
+.cancel:hover {
+    color: #fff;
 }
 
 ul {
     background-color: rgba(255, 255, 255, 0.6);
-    border-radius: 3px;
     clear: both;
     display: block;
     float: left;
-    margin: 20px 0;
+    height: 100%;
     width: 100%;
 }
 
 ul li {
     line-height: 35px;
-    margin-bottom: 10px;
-    padding: 0 20px;
+    padding: 10px 20px;
+}
+
+ul li:hover {
+    background-color: #cbedff;
 }
 
 ul li a {
@@ -133,6 +159,7 @@ ul li a {
     border-bottom: none;
     color: #f00;
     font-size: 30px;
+    font-weight: 600;
     margin-left: 10px;
 }
 
@@ -141,10 +168,21 @@ ul li a {
 }
 
 .hidden {
-    display: none;
+    opacity: 0;
+    top: -500px;
+    transition: 0.5s;
+    -webkit-transition: 0.5s;
 }
 
 @media only screen and (max-width: 360px) {
+    body {
+        font-size: 22px;
+    }
+
+    ul li {
+        line-height: 25px;
+    }
+
     form {
         right: 260px;
     }
