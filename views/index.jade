@@ -1,4 +1,4 @@
-extend layout
+extends layout
 
 block content
   head
@@ -25,10 +25,6 @@ block content
       a(class='cancel', data-action='cancel', href='javascript:;') x
     a(id='add', data-action='add', href='javascript:;') +
     ul
-      for n in notes
-        li
-          span!= n.text
-          a(href='javascript:;', class='delete', data-action='delete', data-url='/note/#{n.id}') x
     #footer
 
     script(src='https://login.persona.org/include.js', type='text/javascript')

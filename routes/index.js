@@ -2,14 +2,19 @@
 
 module.exports = function (app, client, isLoggedIn) {
   app.get('/', function (req, res) {
+    res.render('index');
+  });
+
+  app.get('/notes', function (req, res) {
     if (req.session.email) {
       client.lrange('notes:' + req.session.email, 0, -1, function (err, notes) {
         if (err) {
-          res.render('dashboard', { notes: [] });
+          res.status(400);
+          res.json({ message: err });
 
         } else {
           if (notes.length < 1) {
-            res.render('index', { notes: [] });
+            res.json({ notes: [] });
           } else {
             var notesArr = [];
 
@@ -26,7 +31,7 @@ module.exports = function (app, client, isLoggedIn) {
                 }
 
                 if (notesArr.length === notes.length) {
-                  res.render('index', { notes: notesArr });
+                  res.json({ notes: notesArr });
                 }
               });
             });
@@ -34,7 +39,8 @@ module.exports = function (app, client, isLoggedIn) {
         }
       });
     } else {
-      res.render('index', { notes: [] });
+      res.status(400);
+      res.json({ message: 'not logged in' });
     }
   });
 
@@ -63,7 +69,7 @@ module.exports = function (app, client, isLoggedIn) {
 
           client.lpush('notes:' + req.session.email, keyName);
           client.set(keyName, finalText);
-          res.json({ message: finalText });
+          res.json({ message: finalText, id: id });
         }
       });
     } else {

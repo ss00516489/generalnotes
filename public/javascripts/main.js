@@ -43,6 +43,11 @@ define(['jquery', 'asyncStorage'],
     });
   });
 
+  var drawNote = function (message, id) {
+    return $('<li><p><span>' + message + '</span><a href="javascript:;" ' +
+      'data-url="/note/' + id + '" data-action="delete" class="delete">x</a></p></li>');
+  };
+
   var saveLocalNote = function (li, content) {
     if (content.length > 0) {
       var textArr = content.split(/\s|\n|\r/gi);
@@ -58,26 +63,27 @@ define(['jquery', 'asyncStorage'],
         }
       }
 
-      asyncStorage.setItem('note:' + (new Date().getTime()), content);
+      asyncStorage.setItem('note:local:' + (new Date().getTime()), content);
       content = newText.join(' ');
-
-      li = $('<li><p><span>' + content + '</span><a href="javascript:;" ' +
-        'data-url="#" data-action="delete" class="delete">x</a></p></li>');
+      li = drawNote(content, 0);
       body.find('ul').prepend(li);
       body.find('.cancel').click();
     }
   };
 
-  var postForm = function () {
+  var postForm = function (callback) {
     var li;
     var content = form.find('textarea').val().trim();
 
     $.post('/', form.serialize(), function (data) {
       if (body.hasClass('authenticated-true')) {
-        li = $('<li><p><span>' + data.message + '</span><a href="javascript:;" ' +
-          'data-url="/note/' + data.id + '" data-action="delete" class="delete">x</a></p></li>');
+        li = drawNote(data.message, data.id);
       } else {
         saveLocalNote(li, content);
+      }
+
+      if (callback) {
+        callback(data);
       }
 
     }).fail(function () {
@@ -91,20 +97,70 @@ define(['jquery', 'asyncStorage'],
     });
   };
 
-  // upload clientside notes
+  // upload client-side notes
   var noteKey;
-  var idx = localStorage.length;
+  var idx;
+  var uploadNotes;
+  var loadLocalNotes;
 
-  while (idx > -1) {
-    noteKey = localStorage.key(idx);
-    if (noteKey && noteKey.indexOf('note:') > -1) {
-      form.find('textarea').val(localStorage.getItem(noteKey));
-      postForm();
-      asyncStorage.removeItem(noteKey);
+  asyncStorage.length(function (length) {
+    idx = length;
+
+    uploadNotes = setInterval(function () {
+      if (idx > -1) {
+        asyncStorage.key(idx, function (noteKey) {
+          console.log('** ', noteKey)
+          if (noteKey && noteKey.indexOf('note:local:') > -1) {
+            console.log('*** ', idx, noteKey)
+            asyncStorage.getItem(noteKey, function (noteVal) {
+              if (noteVal) {
+                form.find('textarea').val(noteVal);
+                postForm(function (data) {
+                  console.log(data)
+                  // remove old item, rename it as new item
+                  asyncStorage.removeItem(noteKey);
+                  asyncStorage.setItem('note:' + currentUser + ':' + data.id, data.message, function () {
+                    body.find('ul').prepend(drawNote(data.message, data.id));
+                  });
+                });
+              }
+            });
+          }
+          idx --;
+        });
+
+      } else {
+        clearInterval(uploadNotes);
+      }
+    }, 1);
+  });
+
+  $.get('/notes', function (data) {
+    for (var i = 0; i < data.notes.length; i ++) {
+      body.find('ul').prepend(drawNote(data.notes[i].text, data.notes[i].id));
     }
 
-    idx --;
-  }
+  }).fail(function (data) {
+    asyncStorage.length(function (length) {
+      idx = length;
+
+      // offline, grab local version
+      loadLocalNotes = setInterval(function () {
+        if (idx > -1) {
+          asyncStorage.key(idx, function (noteKey) {
+            if (noteKey && noteKey.indexOf('note:') > -1) {
+              asyncStorage.getItem(noteKey, function (noteVal) {
+                body.find('ul').prepend(drawNote(noteVal, noteKey.split(':')[2]));
+              });
+            }
+          });
+        } else {
+          clearInterval(loadLocalNotes);
+        }
+        idx --;
+      }, 1);
+    });
+  });
 
   body.on('click', function (ev) {
     var self = $(ev.target);
@@ -131,6 +187,10 @@ define(['jquery', 'asyncStorage'],
 
       case 'delete':
         $.post(self.attr('data-url'));
+        if (currentUser) {
+          console.log('deleted')
+          asyncStorage.removeItem('note:' + currentUser + ':' + self.attr('data-url').split('/')[2]);
+        }
         self.closest('li').remove();
         break;
 
