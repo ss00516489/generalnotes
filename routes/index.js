@@ -1,8 +1,15 @@
 'use strict';
 
-module.exports = function (app, client, isLoggedIn) {
+module.exports = function (app, client, nconf, isLoggedIn) {
   app.get('/', function (req, res) {
-    res.render('index');
+    var appcache = '';
+
+    if (!nconf.get('debug')) {
+      appcache = '/manifest.appcache';
+    }
+    res.render('index', {
+      appcache: appcache
+    });
   });
 
   app.get('/notes', function (req, res) {
@@ -69,7 +76,7 @@ module.exports = function (app, client, isLoggedIn) {
 
           client.lpush('notes:' + req.session.email, keyName);
           client.set(keyName, finalText);
-          res.json({ message: finalText, id: id });
+          res.json({ text: finalText, id: id });
         }
       });
     } else {

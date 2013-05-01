@@ -12,13 +12,8 @@ define(['jquery', 'asyncStorage'],
     navigator.id.watch({
       loggedInUser: currentUser,
       onlogin: function (assertion) {
-        $.ajax({
-          url: '/persona/verify',
-          type: 'POST',
-          data: { assertion: assertion },
-          dataType: 'json',
-          cache: false
-        }).done(function (res, status, xhr) {
+        $.post('/persona/verify', { assertion: assertion })
+         .done(function (res, status, xhr) {
           asyncStorage.setItem('personaUser', res.email);
           document.location.href = '/';
 
@@ -27,12 +22,8 @@ define(['jquery', 'asyncStorage'],
         });
       },
       onlogout: function() {
-        $.ajax({
-          url: '/persona/logout',
-          type: 'POST',
-          dataType: 'json',
-          cache: false
-        }).done(function (res, status, xhr) {
+        $.post('/persona/logout')
+         .done(function (res, status, xhr) {
           asyncStorage.removeItem('personaUser');
           document.location.href = '/';
 
@@ -45,7 +36,8 @@ define(['jquery', 'asyncStorage'],
 
   var drawNote = function (message, id) {
     return $('<li><p><span>' + message + '</span><a href="javascript:;" ' +
-      'data-url="/note/' + id + '" data-action="delete" class="delete">x</a></p></li>');
+      'data-url="/note/' + id + '" data-action="delete" data-id="' + id +
+      '" class="delete">x</a></p></li>');
   };
 
   var saveLocalNote = function (li, content) {
@@ -63,11 +55,27 @@ define(['jquery', 'asyncStorage'],
         }
       }
 
-      asyncStorage.setItem('note:local:' + (new Date().getTime()), content);
-      content = newText.join(' ');
-      li = drawNote(content, 0);
-      body.find('ul').prepend(li);
-      body.find('.cancel').click();
+      var rendered = newText.join(' ');
+
+      asyncStorage.getItem('localNoteIds', function (noteIds) {
+        if (!noteIds) {
+          var noteIds = [];
+        }
+
+        var id = Math.round((new Date()).getTime() / 1000);
+
+        noteIds.push(id);
+        asyncStorage.setItem('localNoteIds', noteIds, function () {
+          asyncStorage.setItem('note:local:' + id, {
+            content: rendered,
+            text: content
+          }, function () {
+            li = drawNote(rendered, id);
+            body.find('ul').prepend(li);
+            body.find('.cancel').click();
+          });
+        });
+      });
     }
   };
 
@@ -77,7 +85,20 @@ define(['jquery', 'asyncStorage'],
 
     $.post('/', form.serialize(), function (data) {
       if (body.hasClass('authenticated-true')) {
-        li = drawNote(data.message, data.id);
+        var id = parseInt(data.id, 10);
+
+        asyncStorage.getItem('noteIds', function (noteIds) {
+          if (!noteIds) {
+            var noteIds = [];
+          }
+
+          noteIds.push(id);
+          asyncStorage.setItem('noteIds', noteIds, function () {
+            asyncStorage.setItem('note:' + id, data.text);
+          });
+        });
+
+        li = drawNote(data.text, id);
       } else {
         saveLocalNote(li, content);
       }
@@ -91,67 +112,99 @@ define(['jquery', 'asyncStorage'],
 
     }).always(function () {
       if (content.length > 0 && li) {
-        body.find('ul').prepend(li);
+        body.find('ul').append(li);
       }
       body.find('.cancel').click();
     });
   };
 
-  // upload client-side notes
-  var noteKey;
-  var idx;
-  var noteInterval;
-  var syncNotes = function (upload) {
-    var keyName = 'note:';
-
-    if (upload) {
-      keyName += 'local:';
-    }
-
-    asyncStorage.length(function (length) {
-      idx = length;
-      noteInterval = setInterval(function () {
-        if (idx > -1) {
-          asyncStorage.key(idx, function (noteKey) {
-            if (!!noteKey && noteKey.indexOf(keyName) > -1) {
-              console.log('*** ', idx, noteKey)
-              asyncStorage.getItem(noteKey, function (noteVal) {
-                if (upload) {
-                  form.find('textarea').val(noteVal);
-                  postForm(function (data) {
-                    // remove old item, rename it as new item
-                    asyncStorage.removeItem(noteKey);
-                    asyncStorage.setItem('note:' + currentUser + ':' + data.id, data.message, function () {
-                      body.find('ul').prepend(drawNote(data.message, data.id));
-                    });
-                  });
-
-                } else {
-                  asyncStorage.getItem(noteKey, function (noteVal) {
-                    body.find('ul').prepend(drawNote(noteVal, noteKey.split(':')[2]));
-                  });
-                }
-              });
-            }
-            idx --;
+  var loadNotes = function () {
+    asyncStorage.getItem('localNoteIds', function (noteIds) {
+      if (noteIds) {
+        for (var i = 0; i < noteIds.length; i ++) {
+          var id = noteIds[i];
+          asyncStorage.getItem('note:local:' + id, function (note) {
+            body.find('ul').append(drawNote(note.text, id));
           });
-
-        } else {
-          clearInterval(noteInterval);
         }
-      }, 50);
+      }
+    });
+
+    asyncStorage.getItem('noteIds', function (noteIds) {
+      if (noteIds) {
+        for (var i = 0; i < noteIds.length; i ++) {
+          var id = noteIds[i];
+          asyncStorage.getItem('note:' + id, function (note) {
+            body.find('ul').append(drawNote(note, id));
+          });
+        }
+      }
     });
   };
 
-  syncNotes(true);
+  // upload client-side notes
+  var syncNotes = function (count, noteIdLength, noteIds, rNoteIds, callback) {
+    for (var i = 0; i < noteIds.length; i ++) {
+      var id = noteIds[i];
+      asyncStorage.removeItem('note:local:' + id);
+      asyncStorage.getItem('note:local:' + id, function (note) {
+        form.find('textarea').val(note.text);
+        postForm(function (data) {
+          // remove old item, push as new item
+          rNoteIds.push(data.id);
+
+          noteIds.splice(noteIds.indexOf(id));
+          asyncStorage.setItem('note:' + data.id, data.text);
+          asyncStorage.setItem('localNoteIds', noteIds);
+
+          if (count === noteIdLength) {
+            asyncStorage.removeItem('noteIds', function () {
+              asyncStorage.setItem('noteIds', rNoteIds);
+            });
+          }
+
+          count ++;
+        });
+      });
+    }
+  };
 
   $.get('/notes', function (data) {
-    for (var i = 0; i < data.notes.length; i ++) {
-      body.find('ul').prepend(drawNote(data.message, data.id));
-    }
+    var count = 1;
+    var sCount = 1;
+
+    asyncStorage.getItem('noteIds', function (rNoteIds) {
+      if (!rNoteIds) {
+        var rNoteIds = [];
+      }
+
+      console.log('checking server');
+      for (var i = 0; i < data.notes.length; i ++) {
+        var id = parseInt(data.notes[i].id, 10);
+        var text = data.notes[i].text;
+        console.log(data.notes)
+        asyncStorage.setItem('note:' + id, text);
+        if (rNoteIds.indexOf(id) === -1) {
+          rNoteIds.push(id);
+        }
+
+        if (sCount === data.notes.length) {
+          asyncStorage.setItem('noteIds', rNoteIds);
+
+          asyncStorage.getItem('localNoteIds', function (noteIds) {
+            var noteIdLength = noteIds.length;
+            syncNotes(count, noteIdLength, noteIds, rNoteIds);
+          });
+        }
+
+        body.find('ul').append(drawNote(text, id));
+
+        sCount ++;
+      }
+    });
 
   }).fail(function (data) {
-    syncNotes();
+    loadNotes();
   });
 
   body.on('click', function (ev) {
@@ -178,11 +231,24 @@ define(['jquery', 'asyncStorage'],
         break;
 
       case 'delete':
-        $.post(self.attr('data-url'));
-        if (currentUser) {
-          console.log('deleted')
-          asyncStorage.removeItem('note:' + currentUser + ':' + self.attr('data-url').split('/')[2]);
-        }
+        var id = self.attr('data-id');
+        $.post(self.attr('data-url'), function () {
+          asyncStorage.removeItem('note:' + id);
+          asyncStorage.getItem('noteIds', function (noteIds) {
+            if (noteIds) {
+              noteIds.splice(noteIds.indexOf(id));
+              asyncStorage.setItem('noteIds', noteIds);
+            }
+          });
+          asyncStorage.removeItem('note:local:' + id);
+          asyncStorage.getItem('localNoteIds', function (noteIds) {
+            if (noteIds) {
+              noteIds.splice(noteIds.indexOf(id));
+              asyncStorage.setItem('localNoteIds', noteIds);
+            }
+          });
+        });
+
         self.closest('li').remove();
         break;
 
