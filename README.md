@@ -1,10 +1,10 @@
-# For Rawra
+# General Notes
 
 ## Installation instructions
 
 Clone the repository
 
-> git clone git://github.com/ednapiranha/for-rawra.git
+> git clone git://github.com/ednapiranha/generalnotes.git
 
 Install redis
 

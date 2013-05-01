@@ -100,66 +100,58 @@ define(['jquery', 'asyncStorage'],
   // upload client-side notes
   var noteKey;
   var idx;
-  var uploadNotes;
-  var loadLocalNotes;
+  var noteInterval;
+  var syncNotes = function (upload) {
+    var keyName = 'note:';
 
-  asyncStorage.length(function (length) {
-    idx = length;
+    if (upload) {
+      keyName += 'local:';
+    }
 
-    uploadNotes = setInterval(function () {
-      if (idx > -1) {
-        asyncStorage.key(idx, function (noteKey) {
-          console.log('** ', noteKey)
-          if (noteKey && noteKey.indexOf('note:local:') > -1) {
-            console.log('*** ', idx, noteKey)
-            asyncStorage.getItem(noteKey, function (noteVal) {
-              if (noteVal) {
-                form.find('textarea').val(noteVal);
-                postForm(function (data) {
-                  console.log(data)
-                  // remove old item, rename it as new item
-                  asyncStorage.removeItem(noteKey);
-                  asyncStorage.setItem('note:' + currentUser + ':' + data.id, data.message, function () {
-                    body.find('ul').prepend(drawNote(data.message, data.id));
+    asyncStorage.length(function (length) {
+      idx = length;
+      noteInterval = setInterval(function () {
+        if (idx > -1) {
+          asyncStorage.key(idx, function (noteKey) {
+            if (!!noteKey && noteKey.indexOf(keyName) > -1) {
+              console.log('*** ', idx, noteKey)
+              asyncStorage.getItem(noteKey, function (noteVal) {
+                if (upload) {
+                  form.find('textarea').val(noteVal);
+                  postForm(function (data) {
+                    // remove old item, rename it as new item
+                    asyncStorage.removeItem(noteKey);
+                    asyncStorage.setItem('note:' + currentUser + ':' + data.id, data.message, function () {
+                      body.find('ul').prepend(drawNote(data.message, data.id));
+                    });
                   });
-                });
-              }
-            });
-          }
-          idx --;
-        });
 
-      } else {
-        clearInterval(uploadNotes);
-      }
-    }, 1);
-  });
+                } else {
+                  asyncStorage.getItem(noteKey, function (noteVal) {
+                    body.find('ul').prepend(drawNote(noteVal, noteKey.split(':')[2]));
+                  });
+                }
+              });
+            }
+            idx --;
+          });
+
+        } else {
+          clearInterval(noteInterval);
+        }
+      }, 50);
+    });
+  };
+
+  syncNotes(true);
 
   $.get('/notes', function (data) {
     for (var i = 0; i < data.notes.length; i ++) {
-      body.find('ul').prepend(drawNote(data.notes[i].text, data.notes[i].id));
+      body.find('ul').prepend(drawNote(data.message, data.id));
     }
 
   }).fail(function (data) {
-    asyncStorage.length(function (length) {
-      idx = length;
-
-      // offline, grab local version
-      loadLocalNotes = setInterval(function () {
-        if (idx > -1) {
-          asyncStorage.key(idx, function (noteKey) {
-            if (noteKey && noteKey.indexOf('note:') > -1) {
-              asyncStorage.getItem(noteKey, function (noteVal) {
-                body.find('ul').prepend(drawNote(noteVal, noteKey.split(':')[2]));
-              });
-            }
-          });
-        } else {
-          clearInterval(loadLocalNotes);
-        }
-        idx --;
-      }, 1);
-    });
+    syncNotes();
   });
 
   body.on('click', function (ev) {
