@@ -77,9 +77,8 @@ define(['jquery', 'asyncStorage', 'note'],
         break;
 
       case 'delete':
-        var id = self.attr('data-id');
         $.post(self.attr('data-url'), function () {
-          note.delete(id);
+          note.del(self.attr('data-id'));
         });
 
         self.closest('li').remove();
@@ -92,7 +91,7 @@ define(['jquery', 'asyncStorage', 'note'],
     }
   });
 
-  body.on('keydown', function (ev) {
+  form.on('keydown', function (ev) {
     if (ev.keyCode === 13 && (ev.ctrlKey || ev.metaKey)) {
       note.postForm();
     }

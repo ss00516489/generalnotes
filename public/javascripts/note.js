@@ -12,19 +12,17 @@ define(['jquery', 'asyncStorage'],
     this.localIds = [];
     this.remoteIds = [];
 
-    this.draw = function (message, id) {
-      if (message) {
-        return $('<li><p><span>' + message + '</span><a href="javascript:;" ' +
-          'data-url="/note/' + id + '" data-action="delete" data-id="' + id +
-          '" class="delete">x</a></p></li>');
-      }
+    this.draw = function (message, timestamp, id) {
+      return $('<li data-timestamp="' + timestamp + '"><p><span>' + message +
+        '</span><a href="javascript:;" ' + 'data-url="/note/' + id +
+        '" data-action="delete" data-id="' + id + '" class="delete">x</a></p></li>');
     };
 
     this.saveLocal = function (content) {
       var self = this;
 
       if (content.length > 0) {
-        var textArr = content.split(/\s|\n|\r/gi);
+        var textArr = content.split(/[\s\n\r]/gi);
         var newText = [];
 
         for (var i = 0; i < textArr.length; i ++) {
@@ -46,9 +44,10 @@ define(['jquery', 'asyncStorage'],
         asyncStorage.setItem('localNoteIds', this.localIds, function () {
           asyncStorage.setItem('note:local:' + id, {
             content: rendered,
+            timestamp: id,
             text: content
           }, function () {
-            body.find('ul').append(self.draw(rendered, id));
+            body.find('ul').append(self.draw(rendered, id, id));
             body.find('.cancel').click();
           });
         });
@@ -66,6 +65,7 @@ define(['jquery', 'asyncStorage'],
         asyncStorage.getItem('note:local:' + id, function (n) {
           if (n) {
             form.find('textarea').val(n.text);
+            form.find('input[name="timestamp"]').val(id);
             self.postForm(function (data) {
               // remove old item, push as new item
               self.localIds.splice(self.localIds.indexOf(id), 1);
@@ -82,25 +82,44 @@ define(['jquery', 'asyncStorage'],
       }
     };
 
+    this.drawSorted = function (lis) {
+      for (var i = 0; i < lis.length; i ++) {
+        body.find('ul').append(this.draw(lis[i].text, lis[i].timestamp, lis[i].id));
+      }
+    };
+
     this.syncServer = function (data) {
       console.log('checking server notes');
+      var self = this;
       var count = 1;
+      var lis = [];
 
       for (var i = 0; i < data.notes.length; i ++) {
         var id = parseInt(data.notes[i].id, 10);
         var text = data.notes[i].text;
+        var newNote = {
+          id: id,
+          timestamp: data.notes[i].timestamp,
+          text:text
+        };
 
-        asyncStorage.setItem('note:' + id, text);
+        asyncStorage.setItem('note:' + id, newNote);
 
         if (self.remoteIds.indexOf(id) === -1) {
           self.remoteIds.push(id);
         }
 
+        lis.push(newNote);
+
         if (count === data.notes.length) {
-          asyncStorage.setItem('noteIds', self.remoteIds);
+          lis = lis.sort(function (a, b) {
+            return parseInt(a.id, 10) - parseInt(b.id, 10);
+          });
+          console.log(lis)
+          self.drawSorted(lis);
+          asyncStorage.setItem('noteIds', self.remoteIds.sort());
         }
 
-        body.find('ul').append(this.draw(text, id));
         count ++;
       }
     };
@@ -122,8 +141,12 @@ define(['jquery', 'asyncStorage'],
       var id = parseInt(data.id, 10);
 
       this.remoteIds.push(id);
-      asyncStorage.setItem('noteIds', this.remoteIds, function () {
-        asyncStorage.setItem('note:' + id, data.text);
+      asyncStorage.setItem('noteIds', this.remoteIds.sort(), function () {
+        asyncStorage.setItem('note:' + id, {
+          id: id,
+          text: data.text,
+          timestamp: data.timestamp
+        });
       });
     };
 
@@ -132,12 +155,12 @@ define(['jquery', 'asyncStorage'],
 
       asyncStorage.getItem(noteName + id, function (n) {
         if (n) {
-          body.find('ul').append(self.draw(n.content || n, id));
+          body.find('ul').append(self.draw(n.content || n.text, n.timestamp, id));
         }
       });
     };
 
-    this.delete = function (id) {
+    this.del = function (id) {
       var self = this;
       id = parseInt(id, 10);
 
@@ -149,7 +172,7 @@ define(['jquery', 'asyncStorage'],
       } else if (this.remoteIds.indexOf(id) > -1) {
         this.remoteIds.splice(this.remoteIds.indexOf(id), 1);
         asyncStorage.removeItem('note:' + id);
-        asyncStorage.setItem('noteIds', self.remoteIds);
+        asyncStorage.setItem('noteIds', self.remoteIds.sort());
       }
     };
 
@@ -161,7 +184,7 @@ define(['jquery', 'asyncStorage'],
       $.post('/', form.serialize(), function (data) {
         if (body.hasClass('authenticated-true')) {
           self.add(data);
-          li = self.draw(data.text, data.id);
+          li = self.draw(data.text, data.timestamp, data.id);
         } else {
           li = self.saveLocal(content);
         }

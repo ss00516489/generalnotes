@@ -71,11 +71,11 @@ describe('note', function () {
     });
   });
 
-  describe('delete', function () {
+  describe('del', function () {
     it('should not delete a note', function (done) {
       req.session.email = 'invalid@test.com';
       req.params.id = currentId;
-      note.delete(client, req, function (err, resp) {
+      note.del(client, req, function (err, resp) {
         should.exist(err);
         done();
       });
@@ -83,7 +83,7 @@ describe('note', function () {
 
     it('should delete a note', function (done) {
       req.session.email = 'test@test.com';
-      note.delete(client, req, function (err, resp) {
+      note.del(client, req, function (err, resp) {
         should.exist(resp);
         done();
       });

@@ -132,8 +132,8 @@ textarea:focus {
     line-height: 30px;
     padding: 5px 10px 10px;
     position: absolute;
-    right: -305px;
-    top: 235px;
+    right: -355px;
+    top: 185px;
 }
 
 .cancel:hover {

@@ -47,7 +47,7 @@ module.exports = function (app, client, nconf, isLoggedIn) {
   });
 
   app.post('/note/:id', isLoggedIn, function (req, res, next) {
-    note.delete(client, req, function (err, resp) {
+    note.del(client, req, function (err, resp) {
       if (err) {
         res.status(400);
         res.next(err);
