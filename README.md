@@ -14,7 +14,7 @@ Make sure redis is active.
 
 Install node by using brew or through the website http://nodejs.org/#download
 
-> cd for-rawra
+> cd generalnotes
 
 > cp local.json-dist local.json
 
@@ -23,3 +23,7 @@ Install node by using brew or through the website http://nodejs.org/#download
 Run the site
 
 > node app.js
+
+## Tests
+
+> make test
