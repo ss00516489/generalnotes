@@ -26,35 +26,44 @@ module.exports = function(app, configurations, express) {
       // initial cookieing.
       duration: 24 * 60 * 60 * 1000 * 28 // 4 weeks
     }));
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       res.locals.session = req.session;
       res.locals.debug = nconf.get('debug');
       next();
     });
     app.locals.pretty = true;
     app.use(app.router);
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       res.status(404);
       res.render('404', { url: req.url, layout: false });
       return;
     });
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       res.status(403);
       res.render('403', { url: req.url, layout: false });
       return;
     });
-    app.use(function(err, req, res, next) {
+    app.use(function (err, req, res, next) {
       res.status(err.status || 500);
       res.render('500', { error: err, layout: false });
     });
   });
 
-  app.configure('development, test', function(){
+  app.configure('development, test', function() {
     app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
   });
 
-  app.configure('prod', function(){
+  app.configure('development', function() {
+    app.set('redisnotes', nconf.get('redis_dev'));
+  });
+
+  app.configure('test', function() {
+    app.set('redisnotes', nconf.get('redis_test'));
+  });
+
+  app.configure('prod', function() {
     app.use(express.errorHandler());
+    app.set('redisnotes', nconf.get('redis_prod'));
   });
 
   return app;
