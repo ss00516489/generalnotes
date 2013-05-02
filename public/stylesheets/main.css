@@ -101,7 +101,7 @@ form {
     display: block;
     opacity: 1.0;
     position: fixed;
-    right: 360px;
+    right: 380px;
     top: 10px;
     transition: 0.6s;
     -webkit-transition: 0.6s;
@@ -113,10 +113,11 @@ textarea {
     border-radius: 3px;
     font-family: Arial, sans-serif;
     font-size: 18px;
+    height: 200px;
     padding: 15px;
     position: fixed;
     resize: none;
-    width: 300px;
+    width: 320px;
 }
 
 textarea:focus {
@@ -131,8 +132,8 @@ textarea:focus {
     line-height: 30px;
     padding: 5px 10px 10px;
     position: absolute;
-    right: -285px;
-    top: 265px;
+    right: -305px;
+    top: 235px;
 }
 
 .cancel:hover {
