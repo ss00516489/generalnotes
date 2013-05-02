@@ -71,9 +71,7 @@ define(['jquery', 'asyncStorage'],
               self.localIds.splice(self.localIds.indexOf(id), 1);
 
               if (count === self.localIds.length) {
-                asyncStorage.removeItem('localNoteIds', function () {
-                  asyncStorage.setItem('localNoteIds', self.localIds);
-                });
+                asyncStorage.setItem('localNoteIds', self.localIds);
               }
             });
           }
@@ -146,15 +144,12 @@ define(['jquery', 'asyncStorage'],
       if (this.localIds.indexOf(id) > -1) {
         this.localIds.splice(this.localIds.indexOf(id), 1);
         asyncStorage.removeItem('note:local:' + id);
-        asyncStorage.removeItem('localNoteIds', function () {
-          asyncStorage.setItem('localNoteIds', self.localIds);
-        });
+        asyncStorage.setItem('localNoteIds', self.localIds);
+
       } else if (this.remoteIds.indexOf(id) > -1) {
         this.remoteIds.splice(this.remoteIds.indexOf(id), 1);
         asyncStorage.removeItem('note:' + id);
-        asyncStorage.removeItem('noteIds', function () {
-          asyncStorage.setItem('noteIds', self.remoteIds);
-        });
+        asyncStorage.setItem('noteIds', self.remoteIds);
       }
     };
 
