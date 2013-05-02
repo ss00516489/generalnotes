@@ -70,6 +70,10 @@ a {
     padding: 10px 20px 10px;
 }
 
+#header a {
+    font-size: 20px;
+}
+
 #logout {
     display: inline-block;
     font-size: 16px;
@@ -150,8 +154,27 @@ ul {
 }
 
 ul li {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7);
     line-height: 35px;
     padding: 10px 20px;
+}
+
+li.deleted {
+    border: 0;
+    font-size: 1px;
+    height: 0;
+    opacity: 0;
+    padding: 0;
+    transition: 0.8s;
+    -webkit-transition: 0.8s;
+}
+
+li.deleted p {
+    display: none;
+}
+
+li.local {
+    background-color: #e0e0e0;
 }
 
 ul li:hover {

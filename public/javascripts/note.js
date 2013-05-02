@@ -9,13 +9,25 @@ define(['jquery', 'asyncStorage'],
   var Note = function () {
     var self = this;
 
+    this.offline = false;
     this.localIds = [];
     this.remoteIds = [];
 
     this.draw = function (message, timestamp, id) {
-      return $('<li data-timestamp="' + timestamp + '"><p><span>' + message +
-        '</span><a href="javascript:;" ' + 'data-url="/note/' + id +
-        '" data-action="delete" data-id="' + id + '" class="delete">x</a></p></li>');
+      var local = '';
+      var deletable = '<a href="javascript:;" ' + 'data-url="/note/' + id +
+        '" data-action="delete" data-id="' + id + '" class="delete">x</a>';
+
+      if (timestamp === id) {
+        local = 'local';
+      } else {
+        if (this.offline) {
+          deletable = '';
+        }
+      }
+
+      return $('<li class="' + local + '" data-timestamp="' +
+        timestamp + '"><p><span>' + message + '</span>' + deletable + '</p></li>');
     };
 
     this.saveLocal = function (content) {
@@ -47,7 +59,7 @@ define(['jquery', 'asyncStorage'],
             timestamp: id,
             text: content
           }, function () {
-            body.find('ul').append(self.draw(rendered, id, id));
+            body.find('ul').prepend(self.draw(rendered, id, id));
             body.find('.cancel').click();
           });
         });
@@ -84,6 +96,7 @@ define(['jquery', 'asyncStorage'],
 
     this.drawSorted = function (lis) {
       for (var i = 0; i < lis.length; i ++) {
+        console.log(i)
         body.find('ul').append(this.draw(lis[i].text, lis[i].timestamp, lis[i].id));
       }
     };
@@ -124,6 +137,7 @@ define(['jquery', 'asyncStorage'],
 
       asyncStorage.getItem(keyName, function (noteIds) {
         if (noteIds) {
+          noteIds.sort();
           for (var i = 0; i < noteIds.length; i ++) {
             var id = noteIds[i];
             self.get(noteName, noteIds[i]);

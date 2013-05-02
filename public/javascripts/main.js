@@ -47,6 +47,7 @@ define(['jquery', 'asyncStorage', 'note'],
         note.syncServer(data);
 
       }).fail(function (data) {
+        note.offline = true;
         note.load('localNoteIds', 'note:local:');
         note.load('noteIds', 'note:');
       });
@@ -81,7 +82,7 @@ define(['jquery', 'asyncStorage', 'note'],
           note.del(self.attr('data-id'));
         });
 
-        self.closest('li').remove();
+        self.closest('li').addClass('deleted');
         break;
 
       case 'cancel':
