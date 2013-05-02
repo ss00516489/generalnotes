@@ -35,9 +35,11 @@ define(['jquery', 'asyncStorage'],
   });
 
   var drawNote = function (message, id) {
-    return $('<li><p><span>' + message + '</span><a href="javascript:;" ' +
-      'data-url="/note/' + id + '" data-action="delete" data-id="' + id +
-      '" class="delete">x</a></p></li>');
+    if (message) {
+      return $('<li><p><span>' + message + '</span><a href="javascript:;" ' +
+        'data-url="/note/' + id + '" data-action="delete" data-id="' + id +
+        '" class="delete">x</a></p></li>');
+    }
   };
 
   var saveLocalNote = function (li, content) {
@@ -71,7 +73,7 @@ define(['jquery', 'asyncStorage'],
             text: content
           }, function () {
             li = drawNote(rendered, id);
-            body.find('ul').prepend(li);
+            body.find('ul').append(li);
             body.find('.cancel').click();
           });
         });
@@ -118,25 +120,18 @@ define(['jquery', 'asyncStorage'],
     });
   };
 
-  var loadNotes = function () {
-    asyncStorage.getItem('localNoteIds', function (noteIds) {
-      if (noteIds) {
-        for (var i = 0; i < noteIds.length; i ++) {
-          var id = noteIds[i];
-          asyncStorage.getItem('note:local:' + id, function (note) {
-            body.find('ul').append(drawNote(note.text, id));
-          });
-        }
-      }
+  var getNote = function (noteName, id) {
+    asyncStorage.getItem(noteName + id, function (note) {
+      body.find('ul').append(drawNote(note.content || note, id));
     });
+  };
 
-    asyncStorage.getItem('noteIds', function (noteIds) {
+  var loadNoteTypes = function (keyName, noteName) {
+    asyncStorage.getItem(keyName, function (noteIds) {
       if (noteIds) {
         for (var i = 0; i < noteIds.length; i ++) {
           var id = noteIds[i];
-          asyncStorage.getItem('note:' + id, function (note) {
-            body.find('ul').append(drawNote(note, id));
-          });
+          getNote(noteName, noteIds[i]);
         }
       }
     });
@@ -153,7 +148,7 @@ define(['jquery', 'asyncStorage'],
           // remove old item, push as new item
           rNoteIds.push(data.id);
 
-          noteIds.splice(noteIds.indexOf(id));
+          noteIds.splice(noteIds.indexOf(id), 1);
           asyncStorage.setItem('note:' + data.id, data.text);
           asyncStorage.setItem('localNoteIds', noteIds);
 
@@ -178,34 +173,51 @@ define(['jquery', 'asyncStorage'],
         var rNoteIds = [];
       }
 
-      console.log('checking server');
-      for (var i = 0; i < data.notes.length; i ++) {
-        var id = parseInt(data.notes[i].id, 10);
-        var text = data.notes[i].text;
-        console.log(data.notes)
-        asyncStorage.setItem('note:' + id, text);
-        if (rNoteIds.indexOf(id) === -1) {
-          rNoteIds.push(id);
+      asyncStorage.getItem('localNoteIds', function (noteIds) {
+        if (noteIds) {
+          var noteIdLength = noteIds.length || 0;
+          syncNotes(count, noteIdLength, noteIds, rNoteIds);
         }
 
-        if (sCount === data.notes.length) {
-          asyncStorage.setItem('noteIds', rNoteIds);
+        console.log('checking server');
+        for (var i = 0; i < data.notes.length; i ++) {
+          var id = parseInt(data.notes[i].id, 10);
+          var text = data.notes[i].text;
+          asyncStorage.setItem('note:' + id, text);
+          if (rNoteIds.indexOf(id) === -1) {
+            rNoteIds.push(id);
+          }
 
-          asyncStorage.getItem('localNoteIds', function (noteIds) {
-            var noteIdLength = noteIds.length;
-            syncNotes(count, noteIdLength, noteIds, rNoteIds);
-          });
+          if (sCount === data.notes.length) {
+            asyncStorage.setItem('noteIds', rNoteIds);
+          }
+
+          body.find('ul').append(drawNote(text, id));
+
+          sCount ++;
         }
-
-        body.find('ul').append(drawNote(text, id));
-
-        sCount ++;
-      }
+      });
     });
 
   }).fail(function (data) {
-    loadNotes();
+    loadNoteTypes('localNoteIds', 'note:local:');
+    loadNoteTypes('noteIds', 'note:');
   });
+
+  var removeIds = function (keyName, noteName, id) {
+    asyncStorage.getItem(keyName, function (noteIds) {
+      if (noteIds) {
+        id = parseInt(id, 10);
+        var idx = noteIds.indexOf(id);
+
+        if (idx > -1) {
+          noteIds.splice(idx, 1);
+          asyncStorage.removeItem(noteName + id);
+          asyncStorage.setItem(keyName, noteIds);
+        }
+      }
+    });
+  };
 
   body.on('click', function (ev) {
     var self = $(ev.target);
@@ -233,20 +245,8 @@ define(['jquery', 'asyncStorage'],
       case 'delete':
         var id = self.attr('data-id');
         $.post(self.attr('data-url'), function () {
-          asyncStorage.removeItem('note:' + id);
-          asyncStorage.getItem('noteIds', function (noteIds) {
-            if (noteIds) {
-              noteIds.splice(noteIds.indexOf(id));
-              asyncStorage.setItem('noteIds', noteIds);
-            }
-          });
-          asyncStorage.removeItem('note:local:' + id);
-          asyncStorage.getItem('localNoteIds', function (noteIds) {
-            if (noteIds) {
-              noteIds.splice(noteIds.indexOf(id));
-              asyncStorage.setItem('localNoteIds', noteIds);
-            }
-          });
+          removeIds('noteIds', 'note:', id);
+          removeIds('localNoteIds', 'note:local:', id);
         });
 
         self.closest('li').remove();
