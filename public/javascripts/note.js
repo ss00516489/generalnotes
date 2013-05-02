@@ -91,7 +91,6 @@ define(['jquery', 'asyncStorage'],
     this.syncServer = function (data) {
       console.log('checking server notes');
       var self = this;
-      var count = 1;
       var lis = [];
 
       for (var i = 0; i < data.notes.length; i ++) {
@@ -110,18 +109,14 @@ define(['jquery', 'asyncStorage'],
         }
 
         lis.push(newNote);
-
-        if (count === data.notes.length) {
-          lis = lis.sort(function (a, b) {
-            return parseInt(a.id, 10) - parseInt(b.id, 10);
-          });
-          console.log(lis)
-          self.drawSorted(lis);
-          asyncStorage.setItem('noteIds', self.remoteIds.sort());
-        }
-
-        count ++;
       }
+
+      lis = lis.sort(function (a, b) {
+        return parseInt(a.id, 10) - parseInt(b.id, 10);
+      });
+
+      self.drawSorted(lis);
+      asyncStorage.setItem('noteIds', self.remoteIds);
     };
 
     this.load = function (keyName, noteName) {
@@ -141,7 +136,7 @@ define(['jquery', 'asyncStorage'],
       var id = parseInt(data.id, 10);
 
       this.remoteIds.push(id);
-      asyncStorage.setItem('noteIds', this.remoteIds.sort(), function () {
+      asyncStorage.setItem('noteIds', this.remoteIds, function () {
         asyncStorage.setItem('note:' + id, {
           id: id,
           text: data.text,
@@ -172,7 +167,7 @@ define(['jquery', 'asyncStorage'],
       } else if (this.remoteIds.indexOf(id) > -1) {
         this.remoteIds.splice(this.remoteIds.indexOf(id), 1);
         asyncStorage.removeItem('note:' + id);
-        asyncStorage.setItem('noteIds', self.remoteIds.sort());
+        asyncStorage.setItem('noteIds', self.remoteIds);
       }
     };
 
