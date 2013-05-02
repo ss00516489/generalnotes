@@ -122,7 +122,9 @@ define(['jquery', 'asyncStorage'],
 
   var getNote = function (noteName, id) {
     asyncStorage.getItem(noteName + id, function (note) {
-      body.find('ul').append(drawNote(note.content || note, id));
+      if (note) {
+        body.find('ul').append(drawNote(note.content || note, id));
+      }
     });
   };
 
@@ -140,22 +142,26 @@ define(['jquery', 'asyncStorage'],
   // upload client-side notes
   var syncNotes = function (count, noteIdLength, noteIds, rNoteIds, callback) {
     for (var i = 0; i < noteIds.length; i ++) {
-      var id = noteIds[i];
-      asyncStorage.removeItem('note:local:' + id);
+      var id = parseInt(noteIds[i], 10);
+
       asyncStorage.getItem('note:local:' + id, function (note) {
         form.find('textarea').val(note.text);
         postForm(function (data) {
+          var noteId = parseInt(data.id, 10);
           // remove old item, push as new item
-          rNoteIds.push(data.id);
+          if (rNoteIds.indexOf(noteId) === -1) {
+            rNoteIds.push(noteId);
+            noteIds.splice(noteIds.indexOf(id), 1);
+            asyncStorage.setItem('note:' + noteId, data.text);
+            asyncStorage.setItem('localNoteIds', noteIds);
+            console.log('deleted local ', id);
 
-          noteIds.splice(noteIds.indexOf(id), 1);
-          asyncStorage.setItem('note:' + data.id, data.text);
-          asyncStorage.setItem('localNoteIds', noteIds);
-
-          if (count === noteIdLength) {
-            asyncStorage.removeItem('noteIds', function () {
-              asyncStorage.setItem('noteIds', rNoteIds);
-            });
+            if (count === noteIdLength) {
+              asyncStorage.removeItem('note:local:' + id);
+              asyncStorage.removeItem('noteIds', function () {
+                asyncStorage.setItem('noteIds', rNoteIds);
+              });
+            }
           }
 
           count ++;
@@ -212,6 +218,7 @@ define(['jquery', 'asyncStorage'],
 
         if (idx > -1) {
           noteIds.splice(idx, 1);
+          console.log('deleted local ', id);
           asyncStorage.removeItem(noteName + id);
           asyncStorage.setItem(keyName, noteIds);
         }
