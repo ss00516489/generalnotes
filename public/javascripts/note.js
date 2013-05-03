@@ -50,7 +50,7 @@ define(['jquery', 'asyncStorage'],
         }
 
         var rendered = newText.join(' ');
-        var id = Math.round((new Date()).getTime() / 1000);
+        var id = Math.round(Date.now() / 1000);
 
         this.localIds.push(id);
         asyncStorage.setItem('localNoteIds', this.localIds, function () {
@@ -96,7 +96,6 @@ define(['jquery', 'asyncStorage'],
 
     this.drawSorted = function (lis) {
       for (var i = 0; i < lis.length; i ++) {
-        console.log(i)
         body.find('ul').append(this.draw(lis[i].text, lis[i].timestamp, lis[i].id));
       }
     };
