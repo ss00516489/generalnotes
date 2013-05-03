@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mocha</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="lib/mocha.css" />
+    <script type="text/javascript" src="../javascripts/require.js" data-main="main.js"></script>
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <form method="post" action="http://localhost:3000" class="hidden">
+      <textarea name="text">
+      <input type="hidden" name="timestamp">
+      <button type="submit">Add</button>
+      <a class="cancel" data-action="cancel" href="javascript:;">x</a>
+    <a id="add" data-action="add" href="javascript:;">+</a>
+    <ul></ul>
+  </body>
+</html>

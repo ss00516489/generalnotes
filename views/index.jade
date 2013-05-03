@@ -12,7 +12,7 @@ block content
     else
       link(rel='stylesheet', href='/stylesheets/main-min.css')
 
-  body(class='authenticated-#{!!session.email}')
+  body
     #header
       if session.email
         a(href='javascript:;', data-action='logout', id='logout') Exit

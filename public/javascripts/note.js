@@ -8,6 +8,11 @@ define(['jquery', 'asyncStorage'],
   var Note = function () {
     var self = this;
 
+    var NOTE_IDS = 'noteIds';
+    var LOCAL_IDS = 'localNoteIds';
+    var LOCAL_NOTE = 'note:local:';
+    var SYNC_NOTE = 'note:';
+
     this.offline = false;
     this.localIds = [];
     this.remoteIds = [];
@@ -36,7 +41,7 @@ define(['jquery', 'asyncStorage'],
     /**
      * Save a local version of the note.
      */
-    this.saveLocal = function (content) {
+    this.saveLocal = function (content, callback) {
       var self = this;
 
       if (content.length > 0) {
@@ -59,14 +64,18 @@ define(['jquery', 'asyncStorage'],
         var id = Math.round(Date.now() / 1000);
 
         this.localIds.push(id);
-        asyncStorage.setItem('localNoteIds', this.localIds, function () {
-          asyncStorage.setItem('note:local:' + id, {
+        asyncStorage.setItem(LOCAL_IDS, this.localIds, function () {
+          asyncStorage.setItem(LOCAL_NOTE + id, {
             content: rendered,
             timestamp: id,
             text: content
           }, function () {
             body.find('ul').prepend(self.draw(rendered, id, id));
             body.find('.cancel').click();
+
+            if (callback) {
+              callback();
+            }
           });
         });
       }
@@ -75,14 +84,14 @@ define(['jquery', 'asyncStorage'],
     /**
      * Upload local notes to the server.
      */
-    this.syncLocal = function () {
+    this.syncLocal = function (callback) {
       var self = this;
       var count = this.localIds.length;
 
       for (var i = 0; i < this.localIds.length; i ++) {
         var id = parseInt(this.localIds[i], 10);
 
-        asyncStorage.getItem('note:local:' + id, function (n) {
+        asyncStorage.getItem(LOCAL_NOTE + id, function (n) {
           if (n) {
             form.find('textarea').val(n.text);
             form.find('input[name="timestamp"]').val(id);
@@ -91,13 +100,16 @@ define(['jquery', 'asyncStorage'],
               self.localIds.splice(self.localIds.indexOf(id), 1);
 
               if (count === self.localIds.length) {
-                asyncStorage.setItem('localNoteIds', self.localIds);
+                asyncStorage.setItem(LOCAL_IDS, self.localIds);
+                if (callback) {
+                  callback();
+                }
               }
             });
           }
         });
 
-        asyncStorage.removeItem('note:local:' + id);
+        asyncStorage.removeItem(LOCAL_NOTE + id);
         count --;
       }
     };
@@ -127,7 +139,7 @@ define(['jquery', 'asyncStorage'],
           text:text
         };
 
-        asyncStorage.setItem('note:' + id, newNote);
+        asyncStorage.setItem(SYNC_NOTE + id, newNote);
 
         if (self.remoteIds.indexOf(id) === -1) {
           self.remoteIds.push(id);
@@ -141,7 +153,7 @@ define(['jquery', 'asyncStorage'],
       });
 
       self.drawSorted(lis);
-      asyncStorage.setItem('noteIds', self.remoteIds);
+      asyncStorage.setItem(NOTE_IDS, self.remoteIds);
     };
 
     /**
@@ -164,15 +176,19 @@ define(['jquery', 'asyncStorage'],
     /**
      * Add a new synced note.
      */
-    this.add = function (data) {
+    this.add = function (data, callback) {
       var id = parseInt(data.id, 10);
 
       this.remoteIds.push(id);
-      asyncStorage.setItem('noteIds', this.remoteIds, function () {
-        asyncStorage.setItem('note:' + id, {
+      asyncStorage.setItem(NOTE_IDS, this.remoteIds, function () {
+        asyncStorage.setItem(SYNC_NOTE + id, {
           id: id,
           text: data.text,
           timestamp: data.timestamp
+        }, function () {
+          if (callback) {
+            callback();
+          }
         });
       });
     };
@@ -193,20 +209,22 @@ define(['jquery', 'asyncStorage'],
     /**
      * Delete local or synced note.
      */
-    this.del = function (id) {
+    this.del = function (note) {
       var self = this;
-      id = parseInt(id, 10);
+      var id = parseInt(note.attr('data-id'), 10);
 
-      if (this.localIds.indexOf(id) > -1) {
-        this.localIds.splice(this.localIds.indexOf(id), 1);
-        asyncStorage.removeItem('note:local:' + id);
-        asyncStorage.setItem('localNoteIds', self.localIds);
+      $.post(note.attr('data-url'), function () {
+        if (self.localIds.indexOf(id) > -1) {
+          self.localIds.splice(self.localIds.indexOf(id), 1);
+          asyncStorage.removeItem(LOCAL_NOTE + id);
+          asyncStorage.setItem(LOCAL_IDS, self.localIds);
 
-      } else if (this.remoteIds.indexOf(id) > -1) {
-        this.remoteIds.splice(this.remoteIds.indexOf(id), 1);
-        asyncStorage.removeItem('note:' + id);
-        asyncStorage.setItem('noteIds', self.remoteIds);
-      }
+        } else if (self.remoteIds.indexOf(id) > -1) {
+          self.remoteIds.splice(self.remoteIds.indexOf(id), 1);
+          asyncStorage.removeItem(SYNC_NOTE + id);
+          asyncStorage.setItem(NOTE_IDS, self.remoteIds);
+        }
+      });
     };
 
     /**
@@ -219,7 +237,7 @@ define(['jquery', 'asyncStorage'],
       var content = form.find('textarea').val().trim();
 
       $.post('/', form.serialize(), function (data) {
-        if (body.hasClass('authenticated-true')) {
+        if (!self.offline) {
           self.add(data);
           li = self.draw(data.text, data.timestamp, data.id);
         } else {
