@@ -1,6 +1,5 @@
 define(['jquery', 'asyncStorage'],
   function($, asyncStorage) {
-
   'use strict';
 
   var body = $('body');
@@ -13,6 +12,10 @@ define(['jquery', 'asyncStorage'],
     this.localIds = [];
     this.remoteIds = [];
 
+    /**
+     * Render the note.
+     * If we are offline, don't render the delete link for synced notes.
+     */
     this.draw = function (message, timestamp, id) {
       var local = '';
       var deletable = '<a href="javascript:;" ' + 'data-url="/note/' + id +
@@ -30,6 +33,9 @@ define(['jquery', 'asyncStorage'],
         timestamp + '"><p><span>' + message + '</span>' + deletable + '</p></li>');
     };
 
+    /**
+     * Save a local version of the note.
+     */
     this.saveLocal = function (content) {
       var self = this;
 
@@ -66,8 +72,10 @@ define(['jquery', 'asyncStorage'],
       }
     };
 
+    /**
+     * Upload local notes to the server.
+     */
     this.syncLocal = function () {
-      console.log('uploading local notes');
       var self = this;
       var count = this.localIds.length;
 
@@ -94,14 +102,19 @@ define(['jquery', 'asyncStorage'],
       }
     };
 
+    /**
+     * Sort synced notes by id.
+     */
     this.drawSorted = function (lis) {
       for (var i = 0; i < lis.length; i ++) {
         body.find('ul').append(this.draw(lis[i].text, lis[i].timestamp, lis[i].id));
       }
     };
 
+    /**
+     * Download remote notes.
+     */
     this.syncServer = function (data) {
-      console.log('checking server notes');
       var self = this;
       var lis = [];
 
@@ -131,6 +144,9 @@ define(['jquery', 'asyncStorage'],
       asyncStorage.setItem('noteIds', self.remoteIds);
     };
 
+    /**
+     * Load all synced or local notes.
+     */
     this.load = function (keyName, noteName) {
       var self = this;
 
@@ -145,6 +161,9 @@ define(['jquery', 'asyncStorage'],
       });
     };
 
+    /**
+     * Add a new synced note.
+     */
     this.add = function (data) {
       var id = parseInt(data.id, 10);
 
@@ -158,6 +177,9 @@ define(['jquery', 'asyncStorage'],
       });
     };
 
+    /**
+     * Get local or synced note object.
+     */
     this.get = function (noteName, id) {
       var self = this;
 
@@ -168,6 +190,9 @@ define(['jquery', 'asyncStorage'],
       });
     };
 
+    /**
+     * Delete local or synced note.
+     */
     this.del = function (id) {
       var self = this;
       id = parseInt(id, 10);
@@ -184,6 +209,10 @@ define(['jquery', 'asyncStorage'],
       }
     };
 
+    /**
+     * Post note form to the server if online; otherwise
+     * save locally.
+     */
     this.postForm = function (callback) {
       var self = this;
       var li;

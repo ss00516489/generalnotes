@@ -1,6 +1,5 @@
 define(['jquery', 'asyncStorage', 'note'],
   function($, asyncStorage, Note) {
-
   'use strict';
 
   var note = new Note();
@@ -9,6 +8,9 @@ define(['jquery', 'asyncStorage', 'note'],
   var form = body.find('form');
   var currentUser;
 
+  /**
+   * Persona login
+   */
   asyncStorage.getItem('personaUser', function (email) {
     currentUser = email;
     navigator.id.watch({
@@ -36,6 +38,11 @@ define(['jquery', 'asyncStorage', 'note'],
     });
   });
 
+  /**
+   * Get all local and remote notes.
+   * If online, sync local and server notes; otherwise load whatever
+   * indexedDB has.
+   */
   asyncStorage.getItem('noteIds', function (rNoteIds) {
     note.remoteIds = rNoteIds || [];
 
@@ -54,6 +61,9 @@ define(['jquery', 'asyncStorage', 'note'],
     });
   });
 
+  /**
+   * All click activity
+   */
   body.on('click', function (ev) {
     var self = $(ev.target);
 
@@ -92,6 +102,9 @@ define(['jquery', 'asyncStorage', 'note'],
     }
   });
 
+  /**
+   * Submit form on ctrl+enter or cmd+enter
+   */
   form.on('keydown', function (ev) {
     if (ev.keyCode === 13 && (ev.ctrlKey || ev.metaKey)) {
       note.postForm();
