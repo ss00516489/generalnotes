@@ -28,7 +28,7 @@ module.exports = function(app, configurations, express) {
     }));
     app.use(function (req, res, next) {
       res.locals.session = req.session;
-      res.locals.debug = nconf.get('debug');
+      res.locals.isDebug = nconf.get('debug');
       next();
     });
     app.locals.pretty = true;

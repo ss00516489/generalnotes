@@ -130,6 +130,8 @@ define(['jquery', 'asyncStorage'],
       var self = this;
       var lis = [];
 
+      this.remoteIds = [];
+
       for (var i = 0; i < data.notes.length; i ++) {
         var id = parseInt(data.notes[i].id, 10);
         var text = data.notes[i].text;
