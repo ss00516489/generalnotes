@@ -88,7 +88,9 @@ define(['jquery', 'asyncStorage', 'note'],
         break;
 
       case 'delete':
-        note.del(self);
+        $.post(self.attr('data-url'), function () {
+          note.del(self.attr('data-id'));
+        });
         self.closest('li').addClass('deleted');
         break;
 

@@ -13,8 +13,8 @@ requirejs.config({
   }
 });
 
-require(['require', 'lib/chai', 'lib/mocha'],
-  function (require, chai) {
+require(['require', 'lib/chai', 'lib/mocha', 'lib/sinon'],
+  function (require, chai, sinon) {
 
   assert = chai.assert;
   should = chai.should();

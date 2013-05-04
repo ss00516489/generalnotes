@@ -244,3 +244,7 @@ code .number { color: #2F6FAD }
     position: absolute;
   }
 }
+
+#test-content {
+  display: none;
+}

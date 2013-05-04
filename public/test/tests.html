@@ -9,12 +9,14 @@
   </head>
   <body>
     <div id="mocha"></div>
-    <form method="post" action="http://localhost:3000" class="hidden">
-      <textarea name="text">
-      <input type="hidden" name="timestamp">
-      <button type="submit">Add</button>
-      <a class="cancel" data-action="cancel" href="javascript:;">x</a>
-    <a id="add" data-action="add" href="javascript:;">+</a>
-    <ul></ul>
+    <div id="test-content">
+      <form method="post" action="http://localhost:3000" class="hidden">
+        <textarea name="text">
+        <input type="hidden" name="timestamp">
+        <button type="submit">Add</button>
+        <a class="cancel" data-action="cancel" href="javascript:;">x</a>
+      <a id="add" data-action="add" href="javascript:;">+</a>
+      <ul class="notes"></ul>
+    </div>
   </body>
 </html>

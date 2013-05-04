@@ -9,6 +9,14 @@ define(['jquery', '../javascripts/note'],
       asyncStorage.clear();
     });
 
+    beforeEach(function () {
+      sinon.spy($, 'post');
+    });
+
+    afterEach(function () {
+      $.post.restore();
+    });
+
     it('should draw', function () {
       note.offline = true;
       var id = Math.round(Date.now() / 1000);
@@ -17,7 +25,7 @@ define(['jquery', '../javascripts/note'],
         '" data-action="delete" data-id="' + id + '" class="delete">x</a></p>');
     });
 
-    it('should save local', function (done) {
+    it('should save', function (done) {
       note.saveLocal('http://test.com', function () {
         asyncStorage.getItem('note:local:' + note.localIds[0], function (n) {
           expect(n.text).to.equal('http://test.com');
@@ -38,6 +46,32 @@ define(['jquery', '../javascripts/note'],
           expect(n.text).to.equal('test');
           expect(n.timestamp).to.equal(timestamp);
           expect(n.id).to.equal(1);
+          done();
+        });
+      });
+    });
+
+    it('should delete', function (done) {
+      var timestamp = Math.round(Date.now() / 1000);
+      note.add({
+        id: 1,
+        text: 'test',
+        timestamp: timestamp
+      }, function () {
+        note.del(1, function () {
+          asyncStorage.getItem('note:1', function (n) {
+            expect(n).to.equal(null);
+            done();
+          });
+        });
+      });
+    });
+
+    it('should post the form', function (done) {
+      note.postForm(function () {
+        expect($.post.calledOnce).to.be.true;
+        asyncStorage.getItem('localNoteIds', function (n) {
+          expect(n.length).to.equal(1);
           done();
         });
       });
