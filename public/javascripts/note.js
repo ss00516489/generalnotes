@@ -134,7 +134,7 @@ define(['jquery', 'asyncStorage'],
     };
 
     /**
-     * Sort synced notes by id.
+     * Render note.
      */
     this.drawSorted = function (n) {
       body.find('ul.notes').prepend(this.draw(n.text, n.timestamp, n.id));
