@@ -2,9 +2,6 @@ define(['jquery', 'asyncStorage'],
   function($, asyncStorage) {
   'use strict';
 
-  var body = $('body');
-  var form = body.find('form');
-
   var Note = function () {
     var NOTE_IDS = 'noteIds';
     var LOCAL_IDS = 'localNoteIds';
@@ -14,6 +11,9 @@ define(['jquery', 'asyncStorage'],
     this.offline = false;
     this.localIds = [];
     this.remoteIds = [];
+
+    var body = $('body');
+    var form = body.find('form');
 
     /**
      * Render the note.
@@ -63,17 +63,20 @@ define(['jquery', 'asyncStorage'],
 
         if (this.localIds.indexOf(id) === -1) {
           this.localIds.push(id);
+
+          var data = {
+            content: rendered,
+            timestamp: id,
+            text: content
+          };
+
           asyncStorage.setItem(LOCAL_IDS, this.localIds, function () {
-            asyncStorage.setItem(LOCAL_NOTE + id, {
-              content: rendered,
-              timestamp: id,
-              text: content
-            }, function () {
-              body.find('ul.notes').prepend(self.draw(rendered, id, id));
+            asyncStorage.setItem(LOCAL_NOTE + id, data, function () {
+              body.find('ul.notes').append(self.draw(rendered, id, id));
               body.find('.cancel').click();
 
               if (callback) {
-                callback();
+                callback(data);
               }
             });
           });
@@ -92,76 +95,99 @@ define(['jquery', 'asyncStorage'],
      */
     this.syncLocal = function (callback) {
       var self = this;
-      var count = this.localIds.length;
+      var count = 0;
+      var notesLength = this.localIds.length;
+      var interval;
 
-      for (var i = 0; i < this.localIds.length; i ++) {
-        var id = parseInt(this.localIds[i], 10);
+      interval = setInterval(function () {
+        if (count < notesLength) {
+          var id = parseInt(self.localIds[count], 10);
 
-        asyncStorage.getItem(LOCAL_NOTE + id, function (n) {
-          if (n) {
-            form.find('textarea').val(n.text);
-            form.find('input[name="timestamp"]').val(id);
-            self.postForm(function (data) {
-              // remove old item, push as new item
-              self.localIds.splice(self.localIds.indexOf(id), 1);
-
-              if (count === self.localIds.length) {
-                asyncStorage.setItem(LOCAL_IDS, self.localIds);
-                if (callback) {
-                  callback();
+          asyncStorage.getItem(LOCAL_NOTE + id, function (n) {
+            if (n) {
+              form.find('textarea').val(n.text);
+              form.find('input[name="timestamp"]').val(id);
+              self.postForm(function (data) {
+                if (data) {
+                  if (self.remoteIds.indexOf(data.id) === -1) {
+                    self.remoteIds.push(data.id);
+                    self.remoteIds.sort();
+                    self.drawSorted(data);
+                  }
                 }
-              }
-            });
-          }
-        });
+              });
+            }
+          });
 
-        asyncStorage.removeItem(LOCAL_NOTE + id);
-        count --;
-      }
+          asyncStorage.removeItem(LOCAL_NOTE + id);
+
+        } else {
+          asyncStorage.setItem(LOCAL_IDS, []);
+          clearInterval(interval);
+          if (callback) {
+            callback();
+          }
+        }
+
+        count ++;
+      });
     };
 
     /**
      * Sort synced notes by id.
      */
-    this.drawSorted = function (lis) {
-      for (var i = 0; i < lis.length; i ++) {
-        body.find('ul.notes').append(this.draw(lis[i].text, lis[i].timestamp, lis[i].id));
+    this.drawSorted = function (n) {
+      var noteIdx = this.remoteIds.indexOf(n.id);
+      var nextIdx = noteIdx + 1;
+      var li = this.draw(n.text, n.timestamp, n.id);
+
+      if (nextIdx && noteIdx > nextIdx) {
+        body.find('ul.notes').append(li);
+      } else {
+        body.find('ul.notes').prepend(li);
       }
     };
 
     /**
      * Download remote notes.
      */
-    this.syncServer = function (data) {
+    this.syncServer = function (data, callback) {
       var self = this;
-      var lis = [];
+      var interval;
+      var count = 0;
+      var notesLength = data.notes.length;
 
       this.remoteIds = [];
 
-      for (var i = 0; i < data.notes.length; i ++) {
-        var id = parseInt(data.notes[i].id, 10);
-        var text = data.notes[i].text;
-        var newNote = {
-          id: id,
-          timestamp: data.notes[i].timestamp,
-          text:text
-        };
+      interval = setInterval(function () {
+        if (count < notesLength) {
+          var id = parseInt(data.notes[count].id, 10);
+          var text = data.notes[count].text;
+          var newNote = {
+            id: id,
+            timestamp: data.notes[count].timestamp,
+            text:text
+          };
 
-        asyncStorage.setItem(SYNC_NOTE + id, newNote);
+          asyncStorage.setItem(SYNC_NOTE + id, newNote);
 
-        if (self.remoteIds.indexOf(id) === -1) {
-          self.remoteIds.push(id);
+          if (self.remoteIds.indexOf(id) === -1) {
+            self.remoteIds.push(id);
+            self.remoteIds.sort();
+          }
+
+          self.drawSorted(newNote);
+
+        } else {
+          asyncStorage.setItem(NOTE_IDS, self.remoteIds);
+          clearInterval(interval);
+          if (callback) {
+            callback();
+          }
         }
 
-        lis.push(newNote);
-      }
-
-      lis = lis.sort(function (a, b) {
-        return parseInt(a.id, 10) - parseInt(b.id, 10);
-      });
-
-      self.drawSorted(lis);
-      asyncStorage.setItem(NOTE_IDS, self.remoteIds);
+        count ++;
+      }, 1);
     };
 
     /**
