@@ -5,7 +5,6 @@ var note = require('../lib/note');
 module.exports = function (app, client, nconf, isLoggedIn) {
   app.get('/', function (req, res) {
     var appcache = '';
-    console.log('***** ', req)
     if (!nconf.get('isDebug')) {
       appcache = '/manifest.appcache';
     }
