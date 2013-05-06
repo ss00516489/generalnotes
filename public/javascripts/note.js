@@ -130,22 +130,14 @@ define(['jquery', 'asyncStorage'],
         }
 
         count ++;
-      });
+      }, 1);
     };
 
     /**
      * Sort synced notes by id.
      */
     this.drawSorted = function (n) {
-      var noteIdx = this.remoteIds.indexOf(n.id);
-      var nextIdx = noteIdx + 1;
-      var li = this.draw(n.text, n.timestamp, n.id);
-
-      if (nextIdx && noteIdx > nextIdx) {
-        body.find('ul.notes').append(li);
-      } else {
-        body.find('ul.notes').prepend(li);
-      }
+      body.find('ul.notes').prepend(this.draw(n.text, n.timestamp, n.id));
     };
 
     /**
