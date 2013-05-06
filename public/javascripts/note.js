@@ -6,8 +6,6 @@ define(['jquery', 'asyncStorage'],
   var form = body.find('form');
 
   var Note = function () {
-    var self = this;
-
     var NOTE_IDS = 'noteIds';
     var LOCAL_IDS = 'localNoteIds';
     var LOCAL_NOTE = 'note:local:';
