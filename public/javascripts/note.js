@@ -195,14 +195,29 @@ define(['jquery', 'asyncStorage'],
      */
     this.load = function (keyName, noteName) {
       var self = this;
+      var count = 0;
+      var interval;
 
       asyncStorage.getItem(keyName, function (noteIds) {
+        noteIds.reverse();
+
         if (noteIds) {
-          noteIds.sort();
-          for (var i = 0; i < noteIds.length; i ++) {
-            var id = noteIds[i];
-            self.get(noteName, noteIds[i]);
-          }
+          var notesLength = noteIds.length;
+
+          interval = setInterval(function () {
+            if (count < notesLength) {
+              asyncStorage.getItem(noteName + noteIds[count], function (n) {
+                if (n) {
+                  self.drawSorted(n);
+                }
+              });
+
+            } else {
+              clearInterval(interval);
+            }
+
+            count ++;
+          }, 1);
         }
       });
     };
@@ -224,19 +239,6 @@ define(['jquery', 'asyncStorage'],
             callback();
           }
         });
-      });
-    };
-
-    /**
-     * Get local or synced note object.
-     */
-    this.get = function (noteName, id) {
-      var self = this;
-
-      asyncStorage.getItem(noteName + id, function (n) {
-        if (n) {
-          body.find('ul.notes').append(self.draw(n.content || n.text, n.timestamp, id));
-        }
       });
     };
 
