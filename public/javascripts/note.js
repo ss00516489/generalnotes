@@ -24,6 +24,10 @@ define(['jquery', 'asyncStorage'],
       var deletable = '<a href="javascript:;" ' + 'data-url="/note/' + id +
         '" data-action="delete" data-id="' + id + '" class="delete">x</a>';
 
+      if (!id) {
+        var id = timestamp;
+      }
+
       if (timestamp === id) {
         local = 'local';
       } else {
@@ -166,9 +170,8 @@ define(['jquery', 'asyncStorage'],
           if (self.remoteIds.indexOf(id) === -1) {
             self.remoteIds.push(id);
             self.remoteIds.sort();
+            self.drawSorted(newNote);
           }
-
-          self.drawSorted(newNote);
 
         } else {
           asyncStorage.setItem(NOTE_IDS, self.remoteIds);
