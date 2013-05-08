@@ -21,12 +21,13 @@ define(['jquery', 'asyncStorage'],
      */
     this.draw = function (message, timestamp, id) {
       var local = '';
-      var deletable = '<a href="javascript:;" ' + 'data-url="/note/' + id +
-        '" data-action="delete" data-id="' + id + '" class="delete">x</a>';
 
       if (!id) {
         var id = timestamp;
       }
+
+      var deletable = '<a href="javascript:;" ' + 'data-url="/note/' + id +
+        '" data-action="delete" data-id="' + id + '" class="delete">x</a>';
 
       if (timestamp === id) {
         local = 'local';
@@ -243,7 +244,7 @@ define(['jquery', 'asyncStorage'],
     this.del = function (id, callback) {
       var self = this;
       var id = parseInt(id, 10);
-
+      console.log(id, self.localIds)
       if (self.localIds.indexOf(id) > -1) {
         self.localIds.splice(self.localIds.indexOf(id), 1);
         asyncStorage.removeItem(LOCAL_NOTE + id);
