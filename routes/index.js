@@ -5,7 +5,8 @@ var note = require('../lib/note');
 module.exports = function (app, client, nconf, isLoggedIn) {
   app.get('/', function (req, res) {
     var appcache = '';
-    if (!nconf.get('isDebug')) {
+
+    if (!nconf.get('debug')) {
       appcache = '/manifest.appcache';
     }
     res.render('index', {
@@ -49,7 +50,7 @@ module.exports = function (app, client, nconf, isLoggedIn) {
     note.del(client, req, function (err, resp) {
       if (err) {
         res.status(400);
-        res.next(err);
+        next(err);
       } else {
         res.json({ message: true });
       }

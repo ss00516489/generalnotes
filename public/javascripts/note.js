@@ -244,7 +244,7 @@ define(['jquery', 'asyncStorage'],
     this.del = function (id, callback) {
       var self = this;
       var id = parseInt(id, 10);
-      console.log(id, self.localIds)
+
       if (self.localIds.indexOf(id) > -1) {
         self.localIds.splice(self.localIds.indexOf(id), 1);
         asyncStorage.removeItem(LOCAL_NOTE + id);
