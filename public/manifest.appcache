@@ -9,5 +9,3 @@ CACHE:
 # catch-all for anything else
 NETWORK:
 *
-http://*
-https://*
