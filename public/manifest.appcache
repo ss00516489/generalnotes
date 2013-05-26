@@ -2,7 +2,11 @@ CACHE MANIFEST
 # v2013-04-30-15
 
 CACHE:
-/images/*
+/images/icon-114.png
+/images/icon-128.png
+/images/icon-16.png
+/images/icon-256.png
+/images/icon-72.png
 /javascripts/build/notes.js
 /stylesheets/main-min.css
 
