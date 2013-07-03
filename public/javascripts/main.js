@@ -83,7 +83,7 @@ define(['jquery', 'asyncStorage', 'note'],
           form.removeClass('hidden');
           form.find('textarea').focus();
         } else {
-          note.postForm();
+          note.postForm(currentUser);
         }
         break;
 
@@ -106,7 +106,7 @@ define(['jquery', 'asyncStorage', 'note'],
    */
   form.on('keydown', function (ev) {
     if (ev.keyCode === 13 && (ev.ctrlKey || ev.metaKey)) {
-      note.postForm();
+      note.postForm(currentUser);
     }
   });
 });

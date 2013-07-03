@@ -44,10 +44,6 @@ module.exports = function(app, configurations, express) {
       res.render('403', { url: req.url, layout: false });
       return;
     });
-    app.use(function (err, req, res, next) {
-      res.status(err.status || 500);
-      res.render('500', { error: err, layout: false });
-    });
   });
 
   app.configure('development, test', function() {
@@ -65,6 +61,10 @@ module.exports = function(app, configurations, express) {
   app.configure('prod', function() {
     app.use(express.errorHandler());
     app.set('redisnotes', nconf.get('redis_prod'));
+    app.use(function (err, req, res, next) {
+      res.status(err.status || 500);
+      res.render('500', { error: err, layout: false });
+    });
   });
 
   return app;

@@ -265,27 +265,12 @@ define(['jquery', 'asyncStorage'],
      * Post note form to the server if online; otherwise
      * save locally.
      */
-    this.postForm = function (callback) {
+    this.postForm = function (currentUser, callback) {
       var self = this;
       var li;
       var content = form.find('textarea').val().trim();
 
-      $.post('/', form.serialize(), function (data) {
-        if (!self.offline) {
-          self.add(data);
-          li = self.draw(data.text, data.timestamp, data.id);
-        } else {
-          li = self.saveLocal(content);
-        }
-
-        if (callback) {
-          callback(data);
-        }
-
-      }).fail(function () {
-        self.saveLocal(content, callback);
-
-      }).always(function () {
+      var updateNote = function () {
         if (content.length > 0 && li) {
           body.find('ul.notes').append(li);
         }
@@ -294,7 +279,32 @@ define(['jquery', 'asyncStorage'],
         if (callback) {
           callback();
         }
-      });
+      };
+
+      if (!currentUser) {
+        self.saveLocal(content, callback);
+        updateNote();
+
+      } else {
+        $.post('/', form.serialize(), function (data) {
+          if (!self.offline) {
+            self.add(data);
+            li = self.draw(data.text, data.timestamp, data.id);
+          } else {
+            li = self.saveLocal(content);
+          }
+
+          if (callback) {
+            callback(data);
+          }
+
+        }).fail(function () {
+          self.saveLocal(content, callback);
+
+        }).always(function () {
+          updateNote();
+        });
+      }
     }
   };
 
